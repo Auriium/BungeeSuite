@@ -1,7 +1,6 @@
 package com.elytraforce.bungeesuite;
 
 import com.elytraforce.bungeesuite.announce.AnnounceController;
-import com.elytraforce.bungeesuite.antisteal.CommandBlockListener;
 import com.elytraforce.bungeesuite.antiswear.Filters;
 import com.elytraforce.bungeesuite.command.*;
 import com.elytraforce.bungeesuite.config.PluginConfig;
@@ -87,7 +86,6 @@ public class Main extends Plugin {
         getProxy().getPluginManager().registerListener(this, new PlayerActivityListener(this));
         getProxy().getPluginManager().registerListener(this, new ServerMessageListener(this));
         getProxy().getPluginManager().registerListener(this, new MOTDListener(this));
-        getProxy().getPluginManager().registerListener(this, new CommandBlockListener(this));
         getProxy().getPluginManager().registerListener(this, this.chatSpyListener = new ChatSpyListener(this));
         config.activate();
         
