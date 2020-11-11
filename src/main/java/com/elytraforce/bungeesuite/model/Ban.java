@@ -1,0 +1,16 @@
+package com.elytraforce.bungeesuite.model;
+
+import java.sql.Timestamp;
+import java.util.UUID;
+
+public class Ban extends Punishment<UUID> {
+
+    public Ban(int id, UUID sender, UUID banned, String reason, Timestamp created, Timestamp expiry) {
+        super(id, sender, banned, reason, created, expiry);
+    }
+
+    public boolean isBlacklist() {
+        return getReason().toLowerCase().startsWith("blacklist");
+    }
+}
+           

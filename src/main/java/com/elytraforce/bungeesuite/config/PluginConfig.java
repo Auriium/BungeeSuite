@@ -1,0 +1,161 @@
+package com.elytraforce.bungeesuite.config;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import com.elytraforce.bungeesuite.Main;
+
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.config.Configuration;
+import net.md_5.bungee.config.ConfigurationProvider;
+import net.md_5.bungee.config.YamlConfiguration;
+
+public class PluginConfig {
+	
+	private Configuration config;
+	private PluginConfig instance;
+	private List<String> commandList;
+	
+	private File file;
+	
+	public PluginConfig() {
+		this.instance = this;
+		
+		try {
+	    	file = new File(Main.get().getDataFolder(), "config.yml");
+
+	        if (file.exists()) {
+	            this.config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
+	            return;
+	        }
+
+	        // Create the file to save
+	        if (!file.getParentFile().exists()) {
+	            file.getParentFile().mkdirs();
+	        }
+	        file.createNewFile();
+
+	        // Load the default provided configuration and save it to the file
+	        Configuration config = ConfigurationProvider.getProvider(YamlConfiguration.class)
+	                .load(Main.get().getResourceAsStream("config.yml"));
+	        ConfigurationProvider.getProvider(YamlConfiguration.class).save(config, file);
+	        this.config = config;
+	    } catch (IOException exception) {
+	    	exception.printStackTrace();
+	    }
+		
+		
+		
+	}
+	
+	public void activate() {
+		this.commandList = this.config.getStringList("blocked-commands");
+	}
+    
+    public boolean getMaintenance() {
+    	return config.getBoolean("maintenance");
+    }
+    
+    public void setMaintenance(boolean yes) {
+    	config.set("maintenance", yes);
+    	try {
+			ConfigurationProvider.getProvider(YamlConfiguration.class).save(config, file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    public Configuration getConfig() {
+    	return config;
+    }
+    
+    public String getPack() {
+    	return config.getString("resource-pack-url");
+    }
+    
+    public String getPrefix() {
+    	return ChatColor.translateAlternateColorCodes('&', config.getString("prefix"));
+    }
+    
+    public String getDiscordPrefix() {
+    	return ChatColor.translateAlternateColorCodes('&', config.getString("discord-prefix"));
+    }
+    
+    public String getAnnouncePrefix() {
+    	return ChatColor.translateAlternateColorCodes('&', config.getString("announce-prefix"));
+    }
+    
+    public String getDiscordToken() {
+    	return config.getString("discord.token");
+    }
+    
+    public String getDiscordChannelID() {
+    	return config.getString("discord.monitor-chan-id");
+    }
+    
+    public String getDiscordChangelogID() {
+    	return config.getString("discord.changelog-chan-id");
+    }
+    
+    public String getDiscordTodoID() {
+    	return config.getString("discord.todo-chan-id");
+    }
+    
+    public String getDatabaseURL() {
+    	return config.getString("database.url");
+    }
+    
+    public String getDatabaseUser() {
+    	return config.getString("database.user");
+    }
+    
+    public String getDatabasePassword() {
+    	return config.getString("database.pass");
+    }
+    
+    public Integer getDatabaseThreads() {
+    	return config.getInt("database.threads");
+    }
+    
+    public List<String> getMuteCommands() {
+    	return config.getStringList("mute-commands");
+    }
+    
+    public String getTopMOTD() {
+    	return config.getString("motd.top");
+    }
+
+    public String getBottomMOTD() {
+    	return config.getString("motd.bottom");
+    }
+    
+    public List<String> getBlockedCommands() {
+    	return this.commandList;
+    }
+    
+    public String getRedisIP() {
+    	return config.getString("redis.ip");
+    }
+    
+    public int getRedisPort() {
+    	return config.getInt("redis.port");
+    }
+    
+    public String getRedisPassword() {
+    	return config.getString("redis.password");
+    }
+    
+    public PluginConfig get() {
+    	return this.instance;
+    }
+    
+    public List<String> getSwearWords() {
+    	return config.getStringList("blacklisted-words");
+    }
+    
+    public List<String> getSafeWords() {
+    	return config.getStringList("whitelisted-words");
+    }
+    
+
+}
