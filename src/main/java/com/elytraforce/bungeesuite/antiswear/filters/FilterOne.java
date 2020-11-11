@@ -39,11 +39,7 @@ public class FilterOne implements Filter{
 	@Override
 	public Boolean filter(String string) {
 		// TODO Auto-generated method stub
-		if (swearID(string).startsWith("true")) {
-			return true;
-		} else {
-			return false;
-		}
+        return swearID(string).startsWith("true");
 	}
 
 	@Override

@@ -33,12 +33,8 @@ public class Filters {
         		vl = vl + filter.getVls();
         	}
         }
-        
-        if (vl >= 10) {
-        	return true;
-        } else {
-        	return false;
-        }
+
+        return vl >= 10;
     }
 
     public void handleEvent(ChatEvent event) {
