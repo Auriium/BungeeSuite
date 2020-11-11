@@ -6,7 +6,7 @@ import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 
 import com.elytraforce.bungeesuite.Main;
-import com.elytraforce.bungeesuite.discord.Discord;
+import com.elytraforce.bungeesuite.discord.DiscordController;
 
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
@@ -24,7 +24,7 @@ public class DiscordListener implements Listener{
 	
 	public DiscordListener(Main plugin, String id) {
 		this.instance = plugin;
-		this.channel = Discord.api.getTextChannelById(id).get();
+		this.channel = DiscordController.api.getTextChannelById(id).get();
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -60,6 +60,7 @@ public class DiscordListener implements Listener{
 		ProxiedPlayer player = (ProxiedPlayer) event.getSender();
 		
 		if (event.isCommand()) { return; }
+		if (event.isCancelled()) { return; }
 		
 		String msg = event.getMessage().replaceAll("@everyone", "*snip*").replaceAll("@here", "*snip*");
 		

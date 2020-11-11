@@ -6,6 +6,10 @@ import net.md_5.bungee.api.ChatColor;
 public class AuriBungeeUtil {
 	
 	private final static int CENTER_PX = 154;
+
+	public static String colorString(String string) {
+	    return ChatColor.translateAlternateColorCodes('&',string);
+    }
 	
 	public static String centerMessage(String message) {
 		if (message == null || message.equals("")) return "";

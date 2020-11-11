@@ -4,7 +4,7 @@ import com.elytraforce.bungeesuite.announce.AnnounceController;
 import com.elytraforce.bungeesuite.antiswear.Filters;
 import com.elytraforce.bungeesuite.command.*;
 import com.elytraforce.bungeesuite.config.PluginConfig;
-import com.elytraforce.bungeesuite.discord.Discord;
+import com.elytraforce.bungeesuite.discord.DiscordController;
 import com.elytraforce.bungeesuite.listeners.*;
 import com.elytraforce.bungeesuite.model.Ban;
 import com.elytraforce.bungeesuite.model.IpBan;
@@ -65,11 +65,8 @@ public class Main extends Plugin {
         	getLogger().log(Level.SEVERE, "Data failed to load",e);
             return;
         }
-        
-        AnnounceController.get();
 
         getProxy().registerChannel("ConsoleBanUser");
-
         // Register commands
         getProxy().getPluginManager().registerCommand(this, new AltsCommand(this));
         getProxy().getPluginManager().registerCommand(this, new BanCommand(this));
@@ -88,13 +85,11 @@ public class Main extends Plugin {
         getProxy().getPluginManager().registerListener(this, new MOTDListener(this));
         getProxy().getPluginManager().registerListener(this, this.chatSpyListener = new ChatSpyListener(this));
         config.activate();
-        
-        new Discord(getConfig().getDiscordToken());
+
+        AnnounceController.get();
+        DiscordController.get();
         
         this.filters = new Filters();
-        
-        
-        getProxy().getPluginManager().registerListener(this, new DiscordListener(this, getConfig().getDiscordChannelID()));
         
     }
 
@@ -130,8 +125,8 @@ public class Main extends Plugin {
     public void broadcast(String message, String permission) {
     	String last = ChatColor.translateAlternateColorCodes('&', message);
         getProxy().getPlayers().stream().filter(p -> p.hasPermission(permission))
-                .forEach(p -> p.sendMessage(message));
-        getProxy().getConsole().sendMessage(message);
+                .forEach(p -> p.sendMessage(last));
+        getProxy().getConsole().sendMessage(last);
     }
 
     public PluginConfig getConfig() {

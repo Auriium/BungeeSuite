@@ -2,10 +2,16 @@ package com.elytraforce.bungeesuite.antiswear;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
+import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.antiswear.filters.FilterOne;
 
+import com.elytraforce.bungeesuite.config.PluginConfig;
+import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
+
 
 public class Filters {
 
@@ -44,13 +50,16 @@ public class Filters {
  
         // Overlap/apply filters
         for (Filter filter : filters) {
+
         	if (filter.filter(message)) {
         		vl = vl + filter.getVls();
         	}
+
         }
         
         if (vl >= 10) {
-        	event.setCancelled(true);
+            ((ProxiedPlayer) event.getSender()).sendMessage(Main.get().getConfig().getPrefix() + AuriBungeeUtil.colorString("&cPlease do not swear on ElytraForce!"));
+            event.setCancelled(true);
         }
 
     }

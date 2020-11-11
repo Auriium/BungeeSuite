@@ -8,14 +8,17 @@ discord-prefix: '&9&lDISCORD &7>> &r'
 announce-prefix: '&d&lANNOUNCE &7>> &r'
 maintenance: true
 mute-commands: []
+
 discord:
   token: 'NzcyMTc1NjQ0OTU1NTA4NzM3.X522nA.mSA7ZmYBC04kT2KHwpLDLXJ7DLs'
   monitor-chan-id: '766511575146168380'
   changelog-chan-id: '745315707692122172'
   todo-chan-id: '721086890903863357'
+
 motd:
   top: '&b&lElytra&f&lForce &e&lNetwork &72.0'
   bottom: '&9A Huge Update - &f&oComing Soon!'
+
 blocked-commands:
 - about
 - bukkit:about
@@ -63,6 +66,7 @@ redis:
   port: 6379
   password: ""
 
+
 restartTime: '2:00'
 restartTimeZone: PST
 
@@ -81,11 +85,26 @@ warnings:
 - '1:&cThe server is restarting in 1 seconds.'
 - '0:&cThe server is restarting now.'
 
+announcement-interval: 5 #in minutes
+announcements:
+  - '\n&cTest Announcement\n&cTest Announcement\n'
+
 blacklisted-words:
-- 'fuck'
-- 'nigger'
-- 'retard'
-- 'retarded'
-- 'cunt'
+  - whore
+  - vagina
+  - slut
+  - pussy
+  - nigger
+  - retard
+  - retarded
+  - cunt
+  - nigga
+  - faggot
+  - fag
+  - kike
+  - coon
+  - coon
+  - cike
+
 whitelisted-words:
-- ''
+  - 'cum'

@@ -1,11 +1,10 @@
 package com.elytraforce.bungeesuite.discord;
 
+import com.elytraforce.bungeesuite.listeners.DiscordListener;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.activity.ActivityType;
-import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageBuilder;
-import org.javacord.api.entity.message.embed.Embed;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.event.message.MessageCreateEvent;
 
@@ -20,14 +19,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.javacord.api.DiscordApi;
 
-public class Discord {
+public class DiscordController {
 	
 	public static String token = null; // Bot token
 	
 	public static DiscordApi api = null; // Api Instance
+
+	private static DiscordController instance;
 	
-	public Discord(String token) {
-		Discord.token = token;
+	private DiscordController() {
+		DiscordController.token = Main.get().getConfig().getDiscordToken();
 		
 		// Create an Instance of the DiscordApi
 		try {
@@ -46,6 +47,18 @@ public class Discord {
             	if (event.getMessageAuthor().getId() == api.getClientId()) { return; }
             	
             	if (!event.getMessageAuthor().isUser()) { return; }
+
+            	if (Main.get().getFilters().handleString(event.getMessageContent())) {
+					EmbedBuilder builder = new EmbedBuilder()
+							.setColor(Color.red)
+							.setTitle("WARNING")
+							.setTimestampToNow()
+							.setDescription("Please do not swear on the ElytraForce Network!");
+
+            		event.getMessageAuthor().asUser().get().sendMessage(builder);
+            		event.getMessage().delete();
+            		return;
+				}
             	
             	String sender = EmojiParser.removeAllEmojis(event.getMessageAuthor().getName()).replaceAll("\\s", "");
             	
@@ -125,6 +138,8 @@ public class Discord {
 			}
         	
         }, 0L, 20L, TimeUnit.SECONDS);
+
+		Main.get().getProxy().getPluginManager().registerListener(Main.get(), new DiscordListener(Main.get(), Main.get().getConfig().getDiscordChannelID()));
 	}
 	
 	public static String getBotOwner(MessageCreateEvent event) {
@@ -145,6 +160,14 @@ public class Discord {
 	// Sets the footer, done here to keep it standardised.
 	public static void setFooter(EmbedBuilder embed) {
 		embed.setFooter("AuriDiscord | " + Main.get().getDescription().getVersion().toString());
+	}
+
+	public static DiscordController get() {
+		if (instance == null) {
+			return instance = new DiscordController();
+		} else {
+			return instance;
+		}
 	}
 	
 	

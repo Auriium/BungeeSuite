@@ -7,7 +7,7 @@ A bungeecord side administration suite synced with MySQL
 - Restart announcements
 - Announcements for Titles and Text
 - Discord bot 
-- 
+
 
 # Todo
 - Kicks
