@@ -81,3 +81,11 @@ warnings:
 - '1:&cThe server is restarting in 1 seconds.'
 - '0:&cThe server is restarting now.'
 
+blacklisted-words:
+- 'fuck'
+- 'nigger'
+- 'retard'
+- 'retarded'
+- 'cunt'
+whitelisted-words:
+- ''
