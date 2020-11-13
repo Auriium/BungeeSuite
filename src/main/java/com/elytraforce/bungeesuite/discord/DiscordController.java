@@ -131,6 +131,9 @@ public class DiscordController {
 						event.getChannel().sendMessage(builder);
 					} else {
 
+						m.getEmbeds().forEach(c -> {
+							c.toBuilder().setColor(Color.green);
+						});
 					}
 				});
 			}
