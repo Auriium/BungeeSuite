@@ -17,6 +17,8 @@ import java.awt.Color;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+
 import org.javacord.api.DiscordApi;
 
 public class DiscordController {
@@ -46,7 +48,7 @@ public class DiscordController {
             	
             	if (event.getMessageAuthor().getId() == api.getClientId()) { return; }
             	
-            	if (!event.getMessageAuthor().isUser()) { return; }
+            	if (event.getMessageAuthor().asUser().get().isBot()) { return; }
 
             	if (Main.get().getFilters().handleString(event.getMessageContent())) {
 					EmbedBuilder builder = new EmbedBuilder()
@@ -78,6 +80,23 @@ public class DiscordController {
         });
         
         api.setMessageCacheSize(10, 60*60);
+
+        api.addMessageEditListener(event -> {
+			if (event.getChannel().getIdAsString().equalsIgnoreCase(Main.get().getConfig().getDiscordChannelID())) {
+				if (event.getMessageAuthor().get().asUser().get().isBot()) { return; }
+
+				if (Main.get().getFilters().handleString(event.getNewContent())) {
+					EmbedBuilder builder = new EmbedBuilder()
+							.setColor(Color.red)
+							.setTitle("WARNING")
+							.setTimestampToNow()
+							.setDescription("Please do not swear on the ElytraForce Network!");
+
+					event.getMessageAuthor().get().asUser().get().sendMessage(builder);
+					event.deleteMessage();
+				}
+			}
+		});
         
         api.addMessageCreateListener(event -> {
             if (event.getMessageContent().startsWith("!changelog")) {
@@ -97,6 +116,24 @@ public class DiscordController {
             	event.getMessage().delete();
                 
             }
+
+            if (event.getMessageContent().startsWith("!todo_complete")) {
+				if (!event.getMessageAuthor().canKickUsersFromServer()) { return; }
+
+				String formatted = event.getMessageContent().substring(14);
+
+				api.getMessageById(formatted, event.getChannel()).whenComplete((m,e) -> {
+					if (e != null) {
+						EmbedBuilder builder = new EmbedBuilder()
+								.setTitle("ERROR")
+								.setColor(Color.red)
+								.setDescription("No such message ID exists!");
+						event.getChannel().sendMessage(builder);
+					} else {
+
+					}
+				});
+			}
             
             if (event.getMessageContent().startsWith("!todo")) {
             	
@@ -109,21 +146,10 @@ public class DiscordController {
             		.setDescription(formatted).setTimestampToNow()
             		.setAuthor(EmojiParser.removeAllEmojis(event.getMessageAuthor().getName()))
             		.setColor(Color.RED);
-            	
-            	try {
-					MessageBuilder bv = new MessageBuilder();
-					bv.setEmbed(builder);
-					Message msg = bv.send(api.getTextChannelById(Main.get().getConfig().getDiscordTodoID()).get()).get();
-					msg.addReactionAddListener(e -> {
-						if (e.getEmoji().equalsEmoji("✅")) {
-					        e.editMessage(builder.setColor(Color.GREEN));
-					        e.removeAllReactionsFromMessage();
-					    }	
+
+					api.getTextChannelById(Main.get().getConfig().getDiscordTodoID()).ifPresent(e -> {
+						e.sendMessage(builder);
 					});
-					
-				} catch (InterruptedException | ExecutionException e) {
-					e.printStackTrace();
-				}
                 
             	event.getMessage().delete();
                 

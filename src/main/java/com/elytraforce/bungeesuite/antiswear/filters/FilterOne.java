@@ -1,5 +1,6 @@
 package com.elytraforce.bungeesuite.antiswear.filters;
 
+import java.text.Normalizer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -22,6 +23,9 @@ public class FilterOne implements Filter{
                 .replaceAll("3","e")
                 .replaceAll("1", "i")
                 .replaceAll("0","o");
+        compet = Normalizer
+                        .normalize(compet, Normalizer.Form.NFD)
+                        .replaceAll("[^\\p{ASCII}]", "");
 
         for (final String str : stringList) {
             if (this.checkWord(str, compet)) {
