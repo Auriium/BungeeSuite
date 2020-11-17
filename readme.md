@@ -13,4 +13,5 @@ A bungeecord side administration suite synced with MySQL
 - Kicks
 - Improve antiswear
 - Timed announcements
+- Reports
 - Update discord bot framework to latest

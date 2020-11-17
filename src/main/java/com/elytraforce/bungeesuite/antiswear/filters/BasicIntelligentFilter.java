@@ -10,7 +10,7 @@ import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.antiswear.Filter;
 import org.apache.commons.lang3.StringUtils;
 
-public class FilterOne implements Filter{
+public class BasicIntelligentFilter implements Filter{
 
 	private String swearID(final String s) {
         final List<String> stringList = Main.get().getConfig().getSwearWords();

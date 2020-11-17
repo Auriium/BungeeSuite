@@ -2,12 +2,10 @@ package com.elytraforce.bungeesuite.antiswear;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 import com.elytraforce.bungeesuite.Main;
-import com.elytraforce.bungeesuite.antiswear.filters.FilterOne;
+import com.elytraforce.bungeesuite.antiswear.filters.BasicIntelligentFilter;
 
-import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
@@ -18,7 +16,7 @@ public class Filters {
     private List<Filter> filters = new ArrayList<Filter>();
 
     public Filters() {
-    	filters.add(new FilterOne());
+    	filters.add(new BasicIntelligentFilter());
     }
 
     public void add(Filter filter) {
