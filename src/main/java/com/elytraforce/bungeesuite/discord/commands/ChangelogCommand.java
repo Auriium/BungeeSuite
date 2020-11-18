@@ -1,6 +1,7 @@
 package com.elytraforce.bungeesuite.discord.commands;
 
 import com.elytraforce.bungeesuite.Main;
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
 import com.vdurmont.emoji.EmojiParser;
 import org.apache.commons.lang3.ArrayUtils;
@@ -21,7 +22,7 @@ public class ChangelogCommand extends DiscordCommand {
                 .setAuthor(EmojiParser.removeAllEmojis(event.getMessageAuthor().getName()));
 
 
-        DiscordController.api.getTextChannelById(Main.get().getConfig().getDiscordChangelogID()).ifPresent(e -> e.sendMessage(builder));
+        DiscordController.api.getTextChannelById(PluginConfig.get().getDiscordChangelogID()).ifPresent(e -> e.sendMessage(builder));
     }
 
     @Override

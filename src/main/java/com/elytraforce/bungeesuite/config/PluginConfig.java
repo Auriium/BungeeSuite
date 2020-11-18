@@ -11,16 +11,16 @@ import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 
 public class PluginConfig {
-	
+
 	private Configuration config;
-	private PluginConfig instance;
+	private static PluginConfig instance;
 	private List<String> commandList;
-	
+
 	private File file;
-	
-	public PluginConfig() {
+
+	private PluginConfig() {
 		this.instance = this;
-		
+
 		try {
 	    	file = new File(Main.get().getDataFolder(), "config.yml");
 
@@ -43,19 +43,20 @@ public class PluginConfig {
 	    } catch (IOException exception) {
 	    	exception.printStackTrace();
 	    }
-		
-		
-		
+
+		this.activate();
+
 	}
-	
+
+	//idk why i have to do this
 	public void activate() {
 		this.commandList = this.config.getStringList("blocked-commands");
 	}
-    
+
     public boolean getMaintenance() {
     	return config.getBoolean("maintenance");
     }
-    
+
     public void setMaintenance(boolean yes) {
     	config.set("maintenance", yes);
     	try {
@@ -64,63 +65,63 @@ public class PluginConfig {
 			e.printStackTrace();
 		}
     }
-    
+
     public Configuration getConfig() {
     	return config;
     }
-    
+
     public String getPack() {
     	return config.getString("resource-pack-url");
     }
-    
+
     public String getPrefix() {
     	return ChatColor.translateAlternateColorCodes('&', config.getString("prefix"));
     }
-    
+
     public String getDiscordPrefix() {
     	return ChatColor.translateAlternateColorCodes('&', config.getString("discord-prefix"));
     }
-    
+
     public String getAnnouncePrefix() {
     	return ChatColor.translateAlternateColorCodes('&', config.getString("announce-prefix"));
     }
-    
+
     public String getDiscordToken() {
     	return config.getString("discord.token");
     }
-    
+
     public String getDiscordChannelID() {
     	return config.getString("discord.monitor-chan-id");
     }
-    
+
     public String getDiscordChangelogID() {
     	return config.getString("discord.changelog-chan-id");
     }
-    
+
     public String getDiscordTodoID() {
     	return config.getString("discord.todo-chan-id");
     }
-    
+
     public String getDatabaseURL() {
     	return config.getString("database.url");
     }
-    
+
     public String getDatabaseUser() {
     	return config.getString("database.user");
     }
-    
+
     public String getDatabasePassword() {
     	return config.getString("database.pass");
     }
-    
+
     public Integer getDatabaseThreads() {
     	return config.getInt("database.threads");
     }
-    
+
     public List<String> getMuteCommands() {
     	return config.getStringList("mute-commands");
     }
-    
+
     public String getTopMOTD() {
     	return config.getString("motd.top");
     }
@@ -128,34 +129,41 @@ public class PluginConfig {
     public String getBottomMOTD() {
     	return config.getString("motd.bottom");
     }
-    
+
     public List<String> getBlockedCommands() {
     	return this.commandList;
     }
-    
+
     public String getRedisIP() {
     	return config.getString("redis.ip");
     }
-    
+
     public int getRedisPort() {
     	return config.getInt("redis.port");
     }
-    
+
     public String getRedisPassword() {
     	return config.getString("redis.password");
     }
-    
-    public PluginConfig get() {
-    	return this.instance;
-    }
-    
+
     public List<String> getSwearWords() {
     	return config.getStringList("blacklisted-words");
     }
-    
+
     public List<String> getSafeWords() {
     	return config.getStringList("whitelisted-words");
     }
-    
+
+    public List<String> getAnnouncements() { return config.getStringList("announcements"); }
+
+    public int getAnnouncementCooldown() { return config.getInt("announcement-interval"); }
+
+    public static PluginConfig get() {
+		if (instance == null) {
+			return instance = new PluginConfig();
+		} else {
+			return instance;
+		}
+	}
 
 }

@@ -2,6 +2,7 @@ package com.elytraforce.bungeesuite.listeners;
 
 import java.util.HashMap;
 import com.elytraforce.bungeesuite.Main;
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
@@ -12,10 +13,12 @@ import net.md_5.bungee.event.EventPriority;
 public class ChatSpyListener implements Listener{
 	private HashMap<ProxiedPlayer, Boolean> spyMap;
 	private Main instance;
+	private PluginConfig config;
 	
 	public ChatSpyListener(Main main) {
 		this.spyMap = new HashMap<>();
 		this.instance = main;
+		this.config = PluginConfig.get();
 	}
 	
 	public void enableSpy(ProxiedPlayer player) {
@@ -27,11 +30,7 @@ public class ChatSpyListener implements Listener{
 	}
 	
 	public boolean getIsSpying(ProxiedPlayer player) {
-		if (!spyMap.containsKey(player)) {
-			return false;
-		} else {
-			return spyMap.get(player);
-		}
+		return spyMap.getOrDefault(player, false);
 	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
@@ -55,13 +54,13 @@ public class ChatSpyListener implements Listener{
 			if (getIsSpying(player)) {
 				if (sender.hasPermission("elytraforce.admin")) {
 					if (player.hasPermission("elytraforce.owner")) {
-						player.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.translateAlternateColorCodes(
+						player.sendMessage(config.getPrefix() + ChatColor.translateAlternateColorCodes(
 								'&', "&7(" + sender.getServer().getInfo().getName() + "&7) &b" + sender.getName() + "&f: &7" + event.getMessage()));
 					} else {
 						return;
 					}
 				} else {
-					player.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.translateAlternateColorCodes(
+					player.sendMessage(config.getPrefix() + ChatColor.translateAlternateColorCodes(
 							'&', "&7(" + sender.getServer().getInfo().getName() + "&7) &b" + sender.getName() + "&f: &7" + event.getMessage()));
 				}
 				

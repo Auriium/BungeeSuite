@@ -25,7 +25,7 @@ public class AltsCommand extends BungeeCommand {
 	@Override
     public void onCommand(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.RED + "Usage: /alts <player>");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /alts <player>");
             return;
         }
 
@@ -33,7 +33,7 @@ public class AltsCommand extends BungeeCommand {
             UUID uuid = getUuidFromArg(connection, 0, args);
 
             if (uuid == null) {
-                sender.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
+                sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
             } else {
                 try (PreparedStatement pageEntries = connection.prepareStatement("SELECT DISTINCT name " +
                                 "FROM player_login " +
@@ -54,7 +54,7 @@ public class AltsCommand extends BungeeCommand {
                         }
 
                         if (names.isEmpty()) {
-                            sender.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.RED + "Target player has no alternate accounts");
+                            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Target player has no alternate accounts");
                             return;
                         }
 
@@ -64,7 +64,7 @@ public class AltsCommand extends BungeeCommand {
                 }
             }
         } catch (SQLException e) {
-            sender.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.RED + "An error occurred when checking alts of " + args[0]);
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "An error occurred when checking alts of " + args[0]);
             getPlugin().getLogger().log(Level.SEVERE, "Failed to check alts", e);
         }
     }

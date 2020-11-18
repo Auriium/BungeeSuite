@@ -8,87 +8,76 @@ discord-prefix: '&9&lDISCORD &7>> &r'
 announce-prefix: '&d&lANNOUNCE &7>> &r'
 maintenance: true
 mute-commands: []
-
 discord:
-  token: 'NzcyMTc1NjQ0OTU1NTA4NzM3.X522nA.mSA7ZmYBC04kT2KHwpLDLXJ7DLs'
+  token: NzcyMTc1NjQ0OTU1NTA4NzM3.X522nA.mSA7ZmYBC04kT2KHwpLDLXJ7DLs
   monitor-chan-id: '766511575146168380'
   changelog-chan-id: '745315707692122172'
-  todo-chan-id: '721086890903863357'
-
+  todo-chan-id: '778405989565071390'
 motd:
   top: '&b&lElytra&f&lForce &e&lNetwork &72.0'
   bottom: '&9A Huge Update - &f&oComing Soon!'
-
 blocked-commands:
-- about
-- bukkit:about
-- bukkit:?
-- bukkit:me
-- bukkit:help
-- bukkit:pl
-- bukkit:plugins
-- bukkit:ver
-- bukkit:version
-- icanhasbukkit
-- info
-- '?'
-- calc
-- eval
-- /eval
-- /calc
-- ess
-- calc
-- cs
-- kitbattle
-- kitbattleadvanced
-- kb
-- ttt
-- mttt
-- csp
-- crackshot
-- ama
-- advancedmobarena
-- mobarena
-- eval
-- pl
-- crackshotplus
-- mythicmobs
-- survivalgames
-- deluxehub
-- sg
-- wizards
-- plugins
-- plugin
-- ver
-- version
+  - about
+  - bukkit:about
+  - bukkit:?
+  - bukkit:me
+  - bukkit:help
+  - bukkit:pl
+  - bukkit:plugins
+  - bukkit:ver
+  - bukkit:version
+  - icanhasbukkit
+  - info
+  - '?'
+  - calc
+  - eval
+  - /eval
+  - /calc
+  - ess
+  - calc
+  - cs
+  - kitbattle
+  - kitbattleadvanced
+  - kb
+  - ttt
+  - mttt
+  - csp
+  - crackshot
+  - ama
+  - advancedmobarena
+  - mobarena
+  - eval
+  - pl
+  - crackshotplus
+  - mythicmobs
+  - survivalgames
+  - deluxehub
+  - sg
+  - wizards
+  - plugins
+  - plugin
+  - ver
+  - version
 redis:
   ip: 172.17.0.1
   port: 6379
-  password: ""
-
-
+  password: ''
 restartTime: '2:00'
 restartTimeZone: PST
-
 warnings:
-- '900:&cThe server is restarting in 15 minutes.'
-- '600:&cThe server is restarting in 10 minutes.'
-- '300:&cThe server is restarting in 5 minutes.'
-- '240:&cThe server is restarting in 4 minutes.'
-- '180:&cThe server is restarting in 3 minutes.'
-- '120:&cThe server is restarting in 2 minutes.'
-- '60:&cThe server is restarting in 1 minute.'
-- '30:&cThe server is restarting in 30 seconds.'
-- '15:&cThe server is restarting in 15 seconds.'
-- '3:&cThe server is restarting in 3 seconds.'
-- '2:&cThe server is restarting in 2 seconds.'
-- '1:&cThe server is restarting in 1 seconds.'
-- '0:&cThe server is restarting now.'
-
-announcement-interval: 5 #in minutes
-announcements:
-  - '\n&cTest Announcement\n&cTest Announcement\n'
-
+  - 900:&cThe server is restarting in 15 minutes.
+  - 600:&cThe server is restarting in 10 minutes.
+  - 300:&cThe server is restarting in 5 minutes.
+  - 240:&cThe server is restarting in 4 minutes.
+  - 180:&cThe server is restarting in 3 minutes.
+  - 120:&cThe server is restarting in 2 minutes.
+  - 60:&cThe server is restarting in 1 minute.
+  - 30:&cThe server is restarting in 30 seconds.
+  - 15:&cThe server is restarting in 15 seconds.
+  - 3:&cThe server is restarting in 3 seconds.
+  - 2:&cThe server is restarting in 2 seconds.
+  - 1:&cThe server is restarting in 1 seconds.
+  - 0:&cThe server is restarting now.
 blacklisted-words:
   - whore
   - vagina
@@ -103,8 +92,17 @@ blacklisted-words:
   - fag
   - kike
   - coon
-  - coon
+  - negro
+  - cvnt
   - cike
-
 whitelisted-words:
-  - 'cum'
+  - s82md
+
+announcement-interval: 1
+announcements:
+  - '/&7*&e&l ANNOUNCEMENT &7*//&7Enjoying ElytraForce and our unique minigames?/&eConsider supporting us! All donations go into development!/&7Our store is at &ostore.elytraforce.com!/&e'
+  - '/&7*&e&l ANNOUNCEMENT &7*//&bPlease join the discord so you can get announcements!/&7Link (Redirects) at &odiscord.elytraforce.com/&e'
+  - '/&7*&e&l ANNOUNCEMENT &7*//&7Please make sure to vote!/&bVoting helps us grow the playerbase/&7and spread the word of the server!/&e'
+  - '/&7*&e&l ANNOUNCEMENT &7*//&eLevelling up gives you better gear!/&7Make sure to check your rewards!/&e'
+  - '/&7*&e&l ANNOUNCEMENT &7*//&eDid you know?/&7Ranks can give you a &o1.2x Experience Multiplier&7!/&e'
+  - '/&7*&e&l ANNOUNCEMENT &7*//&eMake sure to read the rules!/&7Knowing the rules keeps you safe/&7and keeps you unbanned!/&e'

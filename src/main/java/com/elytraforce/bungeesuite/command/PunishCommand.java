@@ -24,7 +24,7 @@ public abstract class PunishCommand extends BungeeCommand {
 	@Override
     public void onCommand(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + usage);
+            sender.sendMessage(getConfig().getPrefix() + usage);
             return;
         }
 
@@ -34,18 +34,18 @@ public abstract class PunishCommand extends BungeeCommand {
 
             if (id == null) {
                 // Never joined the server
-                sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
+                sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
             } else {
                 Punishment<?> punishment = getExistingPunishment(connection, id);
                 if (punishment != null) {
-                    sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "That user has already been dealt with");
+                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That user has already been dealt with");
                 } else {
                     String reason;
                     long expiryDate;
                     long duration = TimeFormatUtil.parseIntoMilliseconds(args[1]);
                     if (duration == -1) {
                         if (!sender.hasPermission("elytraforce.mod")) {
-                            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Please specify a valid duration");
+                            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Please specify a valid duration");
                             sender.sendMessage(usage);
                             return;
                         }
@@ -63,7 +63,7 @@ public abstract class PunishCommand extends BungeeCommand {
                 }
             }
         } catch (SQLException e) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the ban");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the ban");
             getPlugin().getLogger().log(Level.SEVERE, "Failed to issue ban", e);
         }
     }

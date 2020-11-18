@@ -2,6 +2,7 @@ package com.elytraforce.bungeesuite.command;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.announce.AnnounceController;
+import com.elytraforce.bungeesuite.announce.RestartController;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -19,7 +20,7 @@ public class AnnounceCommand extends BungeeCommand {
 		ProxiedPlayer player = (ProxiedPlayer) sender;
 		
 		 if (args.length < 2) {
-	            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Usage: /announce <message/title> <message>");
+	            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /announce <message/title/actionbar> <message>");
 	            return;
 	     }
 		 
@@ -32,9 +33,11 @@ public class AnnounceCommand extends BungeeCommand {
 		 if (args[0].equalsIgnoreCase("message")) {
 			 AnnounceController.get().announceString(sb.toString());
 		 } else if (args[0].equalsIgnoreCase("title")) {
-			 AnnounceController.get().announceTitle(sb.toString()); 
+			 AnnounceController.get().announceTitle(sb.toString());
+		 } else if (args[0].equalsIgnoreCase("actionbar")) {
+		 	AnnounceController.get().announceActionbar(sb.toString());
 		 } else {
-			 sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Usage: /announce <message/title> <message>");
+			 sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /announce <message/title> <message>");
 		 }
 		
 	}

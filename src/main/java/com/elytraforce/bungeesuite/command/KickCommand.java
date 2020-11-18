@@ -25,7 +25,7 @@ public class KickCommand extends BungeeCommand {
     @Override
     public void onCommand(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "/kick <player> <reason>");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "/kick <player> <reason>");
             return;
         }
 
@@ -36,7 +36,7 @@ public class KickCommand extends BungeeCommand {
 
             if (target == null) {
                 // Never joined the server
-                sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "That player is not online!");
+                sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player is not online!");
             } else {
                 String reason = getReasonFromArgs(1, args);
 
@@ -53,15 +53,15 @@ public class KickCommand extends BungeeCommand {
                 target.disconnect(ChatColor.translateAlternateColorCodes('&',
                         String.format("&cYou were kicked from &b&lElytra&f&lForce" +
                                 "\n\n&cAuthor: &7%s" +
-                                "\n\n&cReason: &7%s" +
-                                "\n\n&c&lUnfair? Appeal at &7elytraforce.com", sender.getName(), reason)));
+                                "\n&cReason: &7%s" +
+                                "\n\n&c&lAppeal at &7elytraforce.com", sender.getName(), reason)));
 
 
                 String targetName = target.getName();
-                getPlugin().broadcast(ChatColor.RED + String.format(getPlugin().getConfig().getPrefix() + "%s was kicked by %s for (%s)", targetName, sender.getName(), reason), "elytraforce.helper");
+                getPlugin().broadcast(ChatColor.RED + String.format(getConfig().getPrefix() + "%s was kicked by %s for (%s)", targetName, sender.getName(), reason), "elytraforce.helper");
             }
         } catch (SQLException e) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the warning");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the warning");
             getPlugin().getLogger().log(Level.SEVERE, "Failed to issue warning", e);
         }
     }

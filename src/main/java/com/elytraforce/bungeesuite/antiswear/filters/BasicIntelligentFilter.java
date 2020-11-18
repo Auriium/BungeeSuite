@@ -8,13 +8,14 @@ import java.util.regex.Pattern;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.antiswear.Filter;
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import org.apache.commons.lang3.StringUtils;
 
 public class BasicIntelligentFilter implements Filter{
 
 	private String swearID(final String s) {
-        final List<String> stringList = Main.get().getConfig().getSwearWords();
-        final List<String> stringList2 = Main.get().getConfig().getSafeWords();
+        final List<String> stringList = PluginConfig.get().getSwearWords();
+        final List<String> stringList2 = PluginConfig.get().getSafeWords();
 
         String compet = StringUtils.normalizeSpace(s);
         compet = compet
@@ -40,7 +41,7 @@ public class BasicIntelligentFilter implements Filter{
         }
         return "false";
     }
-    
+
     private boolean checkWord(final String s, final String input) {
         final char[] charArray = s.toCharArray();
         String string = "";
@@ -67,5 +68,5 @@ public class BasicIntelligentFilter implements Filter{
 	public Integer getVls() {
 		return 12;
 	}
-	
+
 }

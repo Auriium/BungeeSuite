@@ -1,6 +1,7 @@
 package com.elytraforce.bungeesuite.discord.commands;
 
 import com.elytraforce.bungeesuite.Main;
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
 import com.vdurmont.emoji.EmojiParser;
 import org.apache.commons.lang3.ArrayUtils;
@@ -25,14 +26,14 @@ public class TodoCommand extends DiscordCommand {
                     .setDescription(afterArgs(args,2)).setTimestampToNow()
                     .setColor(Color.RED);
 
-            DiscordController.api.getTextChannelById(Main.get().getConfig().getDiscordTodoID()).ifPresent(e -> e.sendMessage(builder));
+            DiscordController.api.getTextChannelById(PluginConfig.get().getDiscordTodoID()).ifPresent(e -> e.sendMessage(builder));
 
             event.getMessage().delete();
 
         } else if (args[1].equalsIgnoreCase("complete")){
             if (!isNumeric(args[2])) { DiscordController.incorrectArgProvided(event.getChannel(), 2); }
 
-            DiscordController.api.getMessageById(args[2], DiscordController.api.getTextChannelById(Main.get().getConfig().getDiscordTodoID()).get()).whenComplete((m, e) -> {
+            DiscordController.api.getMessageById(args[2], DiscordController.api.getTextChannelById(PluginConfig.get().getDiscordTodoID()).get()).whenComplete((m, e) -> {
                 if (e != null) {
                     DiscordController.incorrectMessageID(event.getChannel());
                 } else {

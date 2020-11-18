@@ -62,10 +62,10 @@ public class MuteCommand extends PunishCommand {
         String timeFormatted = expiry == -1 ? "Permanent" : TimeFormatUtil.toDetailedDate(expiry, true);
         if (target != null) {
             getPlugin().registerMute(id, mute);
-            target.sendMessage(String.format(getPlugin().getConfig().getPrefix() + ChatColor.RED + "You were muted by %s for %s (%s)", sender.getName(), reason, timeFormatted));
+            target.sendMessage(String.format(getConfig().getPrefix() + ChatColor.RED + "You were muted by %s for %s (%s)", sender.getName(), reason, timeFormatted));
         }
         String name = target == null ? targetName : target.getName();
         // Broadcast full message
-        getPlugin().broadcast(ChatColor.RED + String.format(getPlugin().getConfig().getPrefix() + "%s was muted by %s for %s (%s)", name, sender.getName(), reason, timeFormatted), "elytraforce.helper");
+        getPlugin().broadcast(ChatColor.RED + String.format(getConfig().getPrefix() + "%s was muted by %s for %s (%s)", name, sender.getName(), reason, timeFormatted), "elytraforce.helper");
     }
 }

@@ -2,6 +2,7 @@ package com.elytraforce.bungeesuite.listeners;
 
 import java.awt.Color;
 
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 
@@ -32,7 +33,7 @@ public class DiscordListener implements Listener{
 		
 			
 		
-			if (Main.get().getConfig().getMaintenance()) {
+			if (PluginConfig.get().getMaintenance()) {
 				if (!event.getPlayer().hasPermission("elytraforce.helper")) { return; }
 			}
 		
@@ -45,7 +46,7 @@ public class DiscordListener implements Listener{
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerLeave(PlayerDisconnectEvent event) {
 		
-		if (Main.get().getConfig().getMaintenance()) {
+		if (PluginConfig.get().getMaintenance()) {
 			if (!event.getPlayer().hasPermission("elytraforce.helper")) { return; }
 		}
 		

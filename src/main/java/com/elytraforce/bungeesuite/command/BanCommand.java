@@ -1,5 +1,6 @@
 package com.elytraforce.bungeesuite.command;
 
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -34,7 +35,7 @@ public class BanCommand extends PunishCommand {
     public void issueNewPunishment(CommandSender sender, Connection connection, String targetName, UUID id, long expiry, String reason) {
         if (reason.toLowerCase().startsWith("blacklist")
             && sender != getPlugin().getProxy().getConsole()) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Blacklist bans may only be issued from the console");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Blacklist bans may only be issued from the console");
             return;
         }
 
@@ -67,6 +68,6 @@ public class BanCommand extends PunishCommand {
         }
         String name = target == null ? targetName : target.getName();
         // Broadcast full message
-        plugin.broadcast(plugin.getConfig().getPrefix() + ChatColor.RED + String.format("%s was banned by %s for %s (%s)", name, sender.getName(), reason, timeFormatted), "elytraforce.helper");
+        plugin.broadcast(PluginConfig.get().getPrefix() + ChatColor.RED + String.format("%s was banned by %s for %s (%s)", name, sender.getName(), reason, timeFormatted), "elytraforce.helper");
     }
 }

@@ -1,6 +1,8 @@
 package com.elytraforce.bungeesuite.discord;
 
 import com.elytraforce.bungeesuite.Main;
+import com.elytraforce.bungeesuite.announce.RestartController;
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.commands.ChangelogCommand;
 import com.elytraforce.bungeesuite.discord.commands.ShitDevCommand;
 import com.elytraforce.bungeesuite.discord.commands.TestCommand;
@@ -17,6 +19,7 @@ import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.event.message.MessageCreateEvent;
 
 import java.awt.*;
+import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +29,7 @@ public class DiscordController {
 	public static String token = null; // Bot token
 	public static DiscordApi api = null; // Api Instance
 	private static DiscordController instance;
+	private PluginConfig config;
 
 	public static void incorrectArgProvided(TextChannel chan, int position) {
 		EmbedBuilder builder = new EmbedBuilder()
@@ -73,7 +77,8 @@ public class DiscordController {
 	// real shit starts here
 	
 	private DiscordController() {
-		DiscordController.token = Main.get().getConfig().getDiscordToken();
+		this.config = PluginConfig.get();
+		DiscordController.token = config.getDiscordToken();
 		try {
 			api = new DiscordApiBuilder().setToken(token).login().join();
 		} catch (CompletionException IllegalStateException) {
@@ -100,7 +105,7 @@ public class DiscordController {
 			}
         }, 0L, 20L, TimeUnit.SECONDS);
 
-		Main.get().getProxy().getPluginManager().registerListener(Main.get(), new DiscordListener(Main.get(), Main.get().getConfig().getDiscordChannelID()));
+		Main.get().getProxy().getPluginManager().registerListener(Main.get(), new DiscordListener(Main.get(), config.getDiscordChannelID()));
 	}
 	
 	public static String getBotOwner(MessageCreateEvent event) {
@@ -121,11 +126,7 @@ public class DiscordController {
 	}
 
 	public static DiscordController get() {
-		if (instance == null) {
-			return instance = new DiscordController();
-		} else {
-			return instance;
-		}
+		return Objects.requireNonNullElseGet(instance, () -> instance = new DiscordController());
 	}
 	
 	

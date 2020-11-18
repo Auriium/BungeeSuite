@@ -15,7 +15,7 @@ public class SpyCommand extends BungeeCommand{
 	@Override
 	public void onCommand(CommandSender sender, String[] args) {
         if (args.length < 0) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Usage: /cspy");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /cspy");
             return;
         }
         
@@ -25,11 +25,11 @@ public class SpyCommand extends BungeeCommand{
         
         if (getPlugin().getChatSpy().getIsSpying(player)) {
         	getPlugin().getChatSpy().disableSpy(player);
-        	sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Chat Spy Disabled!");
+        	sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Chat Spy Disabled!");
         	
         } else {
         	getPlugin().getChatSpy().enableSpy(player);
-        	sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Chat Spy Enabled!");
+        	sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Chat Spy Enabled!");
         }
 
        

@@ -24,7 +24,7 @@ public class UnmuteCommand extends BungeeCommand {
     public void onCommand(CommandSender sender, String[] args) {
         if (args.length < 1) {
             // TODO: Better usage messages
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Usage: /unmute <player> [reason]");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /unmute <player> [reason]");
             return;
         }
 
@@ -33,17 +33,17 @@ public class UnmuteCommand extends BungeeCommand {
 
             if (id == null) {
                 // Never joined the server
-                sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
+                sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
             } else {
                 Mute mute = getPlugin().getActiveMute(connection, id);
                 if (mute == null) {
-                    sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "That user is not muted");
+                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That user is not muted");
                 } else {
                     String reason = args.length > 1 ? getReasonFromArgs(1, args) : null;
 
                     if (reason == null && !sender.hasPermission("elytraforce.admin")) { // Check sender perms
-                        sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Please specify a valid unmute reason");
-                        sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Usage: /unmute <player> [reason]");
+                        sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Please specify a valid unmute reason");
+                        sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /unmute <player> [reason]");
                         return;
                     }
 
@@ -59,15 +59,15 @@ public class UnmuteCommand extends BungeeCommand {
 
                     ProxiedPlayer target = getPlugin().getProxy().getPlayer(id);
                     if (target != null) {
-                        target.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.GREEN + "You were unmuted by " + sender.getName());
+                        target.sendMessage(getConfig().getPrefix() + ChatColor.GREEN + "You were unmuted by " + sender.getName());
                         getPlugin().unregisterMute(target);
                     }
                     String name = target == null ? args[0] : target.getName();
-                    getPlugin().broadcast(getPlugin().getConfig().getPrefix() + ChatColor.RED + String.format("%s was unmuted by %s", name, sender.getName()), "elytraforce.mod");
+                    getPlugin().broadcast(getConfig().getPrefix() + ChatColor.RED + String.format("%s was unmuted by %s", name, sender.getName()), "elytraforce.mod");
                 }
             }
         } catch (SQLException e) {
-            sender.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the unmute");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the unmute");
             getPlugin().getLogger().log(Level.SEVERE, "Failed to issue unmute", e);
         }
     }

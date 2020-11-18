@@ -1,6 +1,7 @@
 package com.elytraforce.bungeesuite.discord.reactions;
 
 import com.elytraforce.bungeesuite.Main;
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
 import com.vdurmont.emoji.EmojiParser;
 import net.md_5.bungee.api.ChatColor;
@@ -13,7 +14,7 @@ import java.awt.*;
 public class AntiswearReaction implements MessageCreateListener {
     @Override
     public void onMessageCreate(MessageCreateEvent event) {
-        if (event.getChannel().getIdAsString().equalsIgnoreCase(Main.get().getConfig().getDiscordChannelID())) {
+        if (event.getChannel().getIdAsString().equalsIgnoreCase(PluginConfig.get().getDiscordChannelID())) {
 
             if (event.getMessageAuthor().getId() == DiscordController.api.getClientId()) { return; }
 
@@ -34,7 +35,7 @@ public class AntiswearReaction implements MessageCreateListener {
             String sender = EmojiParser.removeAllEmojis(event.getMessageAuthor().getName()).replaceAll("\\s", "");
 
             //remove all emojis from broadcast too.
-            Main.get().broadcast(Main.get().getConfig().getDiscordPrefix() +
+            Main.get().broadcast(PluginConfig.get().getDiscordPrefix() +
                     ChatColor.translateAlternateColorCodes('&', EmojiParser.parseToAliases("&7(" + sender + "&7)&f " + event.getReadableMessageContent())), "elytraforce.default");
         }
     }

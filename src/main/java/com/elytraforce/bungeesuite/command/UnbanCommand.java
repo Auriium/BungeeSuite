@@ -23,7 +23,7 @@ public class UnbanCommand extends BungeeCommand {
     public void onCommand(CommandSender sender, String[] args) {
         if (args.length < 1) {
             // TODO: Better usage messages
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Usage: /unban <player> [reason]");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /unban <player> [reason]");
             return;
         }
 
@@ -33,17 +33,17 @@ public class UnbanCommand extends BungeeCommand {
 
             if (id == null) {
                 // Never joined the server
-                sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
+                sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
             } else {
                 Ban ban = getPlugin().getActiveBan(connection, id);
                 if (ban == null) {
-                    sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "That user is not banned");
+                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That user is not banned");
                 } else {
                     String reason = args.length > 1 ? getReasonFromArgs(1, args) : null;
 
                     if (reason == null && !sender.hasPermission("elytraforce.admin")) { // Check sender perms
-                        sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Please specify a valid unban reason");
-                        sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Usage: /unban <player> [reason]");
+                        sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Please specify a valid unban reason");
+                        sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /unban <player> [reason]");
                         return;
                     }
 
@@ -57,11 +57,11 @@ public class UnbanCommand extends BungeeCommand {
                         insertUnban.executeUpdate();
                     }
 
-                    getPlugin().broadcast(getPlugin().getConfig().getPrefix() + ChatColor.RED + String.format("%s was unbanned by %s", args[0], sender.getName()), "elytraforce.helper");
+                    getPlugin().broadcast(getConfig().getPrefix() + ChatColor.RED + String.format("%s was unbanned by %s", args[0], sender.getName()), "elytraforce.helper");
                 }
             }
         } catch (SQLException e) {
-            sender.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the unban");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the unban");
             getPlugin().getLogger().log(Level.SEVERE, "Failed to issue unban", e);
         }
     }

@@ -24,7 +24,7 @@ public class WarnCommand extends BungeeCommand {
 	@Override
     public void onCommand(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "/warn <player> <reason>");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "/warn <player> <reason>");
             return;
         }
 
@@ -34,7 +34,7 @@ public class WarnCommand extends BungeeCommand {
 
             if (id == null) {
                 // Never joined the server
-                sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
+                sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
             } else {
                 String reason = getReasonFromArgs(1, args);
 
@@ -50,14 +50,14 @@ public class WarnCommand extends BungeeCommand {
 
                 ProxiedPlayer target = getPlugin().getProxy().getPlayer(id);
                 if (target != null) {
-                    target.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "You were warned by " + sender.getName() + " for (" + reason + ")");
+                    target.sendMessage(getConfig().getPrefix() + ChatColor.RED + "You were warned by " + sender.getName() + " for (" + reason + ")");
                 }
                 String name = target == null ? args[0] : target.getName();
                 // Broadcast full message
-                getPlugin().broadcast(ChatColor.RED + String.format(getPlugin().getConfig().getPrefix() + "%s was warned by %s for (%s)", name, sender.getName(), reason), "elytraforce.helper");
+                getPlugin().broadcast(ChatColor.RED + String.format(getConfig().getPrefix() + "%s was warned by %s for (%s)", name, sender.getName(), reason), "elytraforce.helper");
             }
         } catch (SQLException e) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the warning");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the warning");
             getPlugin().getLogger().log(Level.SEVERE, "Failed to issue warning", e);
         }
     }

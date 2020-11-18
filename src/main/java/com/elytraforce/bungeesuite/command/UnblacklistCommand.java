@@ -22,10 +22,10 @@ public class UnblacklistCommand extends BungeeCommand {
 	@Override
     public void onCommand(CommandSender sender, String[] args) {
         if (sender != getPlugin().getProxy().getConsole()) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Blacklist bans may only be removed by the console");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Blacklist bans may only be removed by the console");
             return;
         } else if (args.length < 1) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Usage: /unblacklist <player>");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /unblacklist <player>");
             return;
         }
 
@@ -35,11 +35,11 @@ public class UnblacklistCommand extends BungeeCommand {
 
             if (id == null) {
                 // Never joined the server
-                sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
+                sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
             } else {
                 Ban ban = getPlugin().getActiveBan(connection, id);
                 if (ban == null || !ban.isBlacklist()) {
-                    sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "That user is not blacklisted");
+                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That user is not blacklisted");
                 } else {
                    try (PreparedStatement insertUnban = connection.prepareStatement("INSERT INTO player_punish_reverse" +
                             "(punish_id, banned_id) " +
@@ -49,11 +49,11 @@ public class UnblacklistCommand extends BungeeCommand {
                         insertUnban.executeUpdate();
                     }
 
-                    getPlugin().broadcast(ChatColor.RED + String.format(getPlugin().getConfig().getPrefix() + "%s was unbanned by %s", args[0], sender.getName()), "elytraforce.admin");
+                    getPlugin().broadcast(ChatColor.RED + String.format(getConfig().getPrefix() + "%s was unbanned by %s", args[0], sender.getName()), "elytraforce.admin");
                 }
             }
         } catch (SQLException e) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the unban");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the unban");
             getPlugin().getLogger().log(Level.SEVERE, "Failed to issue unblacklist", e);
         }
     }

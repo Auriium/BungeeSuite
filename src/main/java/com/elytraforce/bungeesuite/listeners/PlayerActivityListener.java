@@ -1,5 +1,6 @@
 package com.elytraforce.bungeesuite.listeners;
 
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -30,15 +31,17 @@ import com.elytraforce.bungeesuite.util.TimeFormatUtil;
 public class PlayerActivityListener implements Listener {
 
     private Main plugin;
+    private PluginConfig config;
 
     public PlayerActivityListener(Main plugin) {
         this.plugin = plugin;
+        this.config = PluginConfig.get();
     }
 
     @SuppressWarnings("deprecation")
 	@EventHandler
     public void onPostLogin(PostLoginEvent event) {
-    	if (plugin.getConfig().getMaintenance()) {
+    	if (config.getMaintenance()) {
          	ProxiedPlayer checkPlayer = event.getPlayer();
         	if (!checkPlayer.hasPermission("elytraforce.helper")) {
         		checkPlayer.disconnect(ChatColor.translateAlternateColorCodes('&',
@@ -88,7 +91,7 @@ public class PlayerActivityListener implements Listener {
                         }
 
                         // Broadcast that the player has some banned alternate accounts
-                        plugin.broadcast(ChatColor.RED + String.format(Main.get().getConfig().getPrefix() + "%s is an alternate account of the following banned players: %s",
+                        plugin.broadcast(ChatColor.RED + String.format(config.getPrefix() + "%s is an alternate account of the following banned players: %s",
                                 event.getConnection().getName(), alts.stream().collect(Collectors.joining(", "))), "elytraforce.helper");
                     }
 
@@ -161,7 +164,7 @@ public class PlayerActivityListener implements Listener {
         if (event.isCommand()) {
             if (isMutedCommand(event.getMessage())) {
                 event.setCancelled(true);
-                player.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.RED + "You cannot use this command while muted");
+                player.sendMessage(config.getPrefix() + ChatColor.RED + "You cannot use this command while muted");
             }
             return;
         }
@@ -169,9 +172,9 @@ public class PlayerActivityListener implements Listener {
         event.setCancelled(true);
         long expiry = mute.getExpiry() == null ? -1 : mute.getExpiry().getTime();
         if (expiry == -1) {
-            player.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.RED + "You are permanently muted");
+            player.sendMessage(config.getPrefix() + ChatColor.RED + "You are permanently muted");
         } else {
-            player.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.RED + "Your mute expires in " + TimeFormatUtil.toDetailedDate(expiry));
+            player.sendMessage(config.getPrefix() + ChatColor.RED + "Your mute expires in " + TimeFormatUtil.toDetailedDate(expiry));
         }
     }
 
@@ -179,7 +182,7 @@ public class PlayerActivityListener implements Listener {
         String[] split = fullCommand.split(" ");
         for (int i = split.length ; i >= 0 ; i--) {
             String command = Arrays.stream(split, 0, i).collect(Collectors.joining(" "));
-            if (Main.get().getConfig().getMuteCommands().contains(command.toLowerCase())) {
+            if (config.getMuteCommands().contains(command.toLowerCase())) {
                 return true;
             }
         }

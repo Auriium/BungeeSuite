@@ -1,6 +1,7 @@
 package com.elytraforce.bungeesuite.command;
 
 import com.elytraforce.bungeesuite.Main;
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -19,15 +20,18 @@ import java.util.stream.Collectors;
 public abstract class BungeeCommand extends Command implements TabExecutor {
 
     private Main plugin;
+    private PluginConfig config;
 
     public BungeeCommand(Main plugin, String name, String permission) {
         super(name, permission);
         this.plugin = plugin;
+        this.config = PluginConfig.get();
     }
 
     public Main getPlugin() {
         return plugin;
     }
+    public PluginConfig getConfig() { return this.config; }
 
     @Override
     public final void execute(final CommandSender commandSender, final String[] args) {

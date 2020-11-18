@@ -1,6 +1,7 @@
 package com.elytraforce.bungeesuite.discord.reactions;
 
 import com.elytraforce.bungeesuite.Main;
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.event.message.MessageEditEvent;
 import org.javacord.api.listener.message.MessageEditListener;
@@ -10,7 +11,7 @@ import java.awt.*;
 public class AntiswearEditReaction implements MessageEditListener {
     @Override
     public void onMessageEdit(MessageEditEvent event) {
-        if (event.getChannel().getIdAsString().equalsIgnoreCase(Main.get().getConfig().getDiscordChannelID())) {
+        if (event.getChannel().getIdAsString().equalsIgnoreCase(PluginConfig.get().getDiscordChannelID())) {
 
             if (event.getMessageAuthor().get().asUser().get().isBot()) return;
 

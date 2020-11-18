@@ -26,7 +26,7 @@ public class InfoCommand extends BungeeCommand {
 	@Override
     public void onCommand(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Usage: /info <player> [page]");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /info <player> [page]");
             return;
         }
 
@@ -34,8 +34,8 @@ public class InfoCommand extends BungeeCommand {
         try {
             page = args.length == 1 ? 0 : Integer.parseInt(args[1]) - 1;
         } catch (NumberFormatException e) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Please enter a valid page number");
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Usage: /info <player> [page]");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Please enter a valid page number");
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /info <player> [page]");
             return;
         }
 
@@ -43,22 +43,22 @@ public class InfoCommand extends BungeeCommand {
             UUID uuid = getUuidFromArg(connection, 0, args);
 
             if (uuid == null) {
-                sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
+                sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
             } else {
                 int maxPages = getMaxPages(connection, uuid);
 
                 if (maxPages == 0) {
-                    sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Target player has no punishments on record");
+                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Target player has no punishments on record");
                     return;
                 }
 
                 if (page + 1 > maxPages || page < 0) {
-                    sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "You must enter a page number between 1 and " + maxPages);
-                    sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "Usage: /info <player> [page]");
+                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "You must enter a page number between 1 and " + maxPages);
+                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /info <player> [page]");
                     return;
                 }
 
-                sender.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.GRAY + "Fetching punishment information...");
+                sender.sendMessage(getConfig().getPrefix() + ChatColor.GRAY + "Fetching punishment information...");
                 try (PreparedStatement pageEntries = connection.prepareStatement("SELECT " +
                         "(SELECT name FROM player_login pl WHERE pl.id = p.sender_id ORDER BY time DESC LIMIT 1) name, " +
                         "pr.sender_id reverse_sender_id, " +
@@ -81,7 +81,7 @@ public class InfoCommand extends BungeeCommand {
                     pageEntries.setInt(3, (page * ENTRIES_PER_PAGE) + ENTRIES_PER_PAGE);
 
                     try (ResultSet rs = pageEntries.executeQuery()) {
-                        sender.sendMessage(Main.get().getConfig().getPrefix() + ChatColor.translateAlternateColorCodes('&',
+                        sender.sendMessage(getConfig().getPrefix() + ChatColor.translateAlternateColorCodes('&',
                                 String.format("&cPunishments of %s &7(Page %d/%d)", args[0], page + 1, maxPages)));
                         while (rs.next()) {
                             String raw = rs.getString("name");
@@ -116,6 +116,8 @@ public class InfoCommand extends BungeeCommand {
                                 builder.append("[Warn]").color(ChatColor.YELLOW).append(" ");
                             } else if (type.equalsIgnoreCase("mute")) {
                                 builder.append("[Mute]").color(ChatColor.GOLD).append(" ").color(ChatColor.BOLD);
+                            } else if(type.equalsIgnoreCase("kick")) {
+                                builder.append("[Kick]").color(ChatColor.GRAY).append(" ").color(ChatColor.BOLD);
                             } else {
                                 builder.append("[Ban]").color(ChatColor.RED).append("  ").color(ChatColor.BOLD);
                             }
@@ -143,7 +145,7 @@ public class InfoCommand extends BungeeCommand {
                 }
             }
         } catch (SQLException e) {
-            sender.sendMessage(getPlugin().getConfig().getPrefix() + ChatColor.RED + "An error occurred when getting info of " + args[0]);
+            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "An error occurred when getting info of " + args[0]);
             getPlugin().getLogger().log(Level.SEVERE, "Failed to check info", e);
         }
     }

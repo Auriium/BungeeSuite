@@ -6,6 +6,7 @@ import java.util.List;
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.antiswear.filters.BasicIntelligentFilter;
 
+import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
@@ -14,8 +15,10 @@ import net.md_5.bungee.api.event.ChatEvent;
 public class Filters {
 
     private List<Filter> filters = new ArrayList<Filter>();
+    private PluginConfig config;
 
     public Filters() {
+        this.config = PluginConfig.get();
     	filters.add(new BasicIntelligentFilter());
     }
 
@@ -56,7 +59,7 @@ public class Filters {
         }
         
         if (vl >= 10) {
-            ((ProxiedPlayer) event.getSender()).sendMessage(Main.get().getConfig().getPrefix() + AuriBungeeUtil.colorString("&cPlease do not swear on ElytraForce!"));
+            ((ProxiedPlayer) event.getSender()).sendMessage(config.getPrefix() + AuriBungeeUtil.colorString("&cPlease do not swear on ElytraForce!"));
             event.setCancelled(true);
         }
 
