@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS player_punish (
   reason        VARCHAR(100) NOT NULL,
   creation_date TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   expiry_date   TIMESTAMP    NULL,
-  type          ENUM ('ban', 'mute', 'warn'),
+  type          ENUM ('ban', 'mute', 'warn', 'kick'),
   PRIMARY KEY (id)
 );
 

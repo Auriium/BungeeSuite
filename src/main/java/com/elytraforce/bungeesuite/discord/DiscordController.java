@@ -2,6 +2,7 @@ package com.elytraforce.bungeesuite.discord;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.discord.commands.ChangelogCommand;
+import com.elytraforce.bungeesuite.discord.commands.ShitDevCommand;
 import com.elytraforce.bungeesuite.discord.commands.TestCommand;
 import com.elytraforce.bungeesuite.discord.commands.TodoCommand;
 import com.elytraforce.bungeesuite.discord.reactions.AntiswearEditReaction;
@@ -87,6 +88,7 @@ public class DiscordController {
         api.addMessageCreateListener(new ChangelogCommand());
         api.addMessageCreateListener(new TestCommand());
         api.addMessageCreateListener(new TodoCommand());
+        api.addMessageCreateListener(new ShitDevCommand());
 
         api.addMessageCreateListener(new AntiswearReaction());
         api.addMessageEditListener(new AntiswearEditReaction());

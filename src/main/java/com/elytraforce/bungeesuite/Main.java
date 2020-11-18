@@ -79,6 +79,7 @@ public class Main extends Plugin {
         getProxy().getPluginManager().registerCommand(this, new SpyCommand(this));
         getProxy().getPluginManager().registerCommand(this, new MaintenanceCommand(this));
         getProxy().getPluginManager().registerCommand(this, new AnnounceCommand(this));
+        getProxy().getPluginManager().registerCommand(this, new KickCommand(this));
 
         getProxy().getPluginManager().registerListener(this, new PlayerActivityListener(this));
         getProxy().getPluginManager().registerListener(this, new ServerMessageListener(this));
