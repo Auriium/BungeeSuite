@@ -10,8 +10,7 @@ A bungeecord side administration suite synced with MySQL
 
 
 # Todo
-- Kicks
 - Improve antiswear
-- Timed announcements
 - Reports
 - Update discord bot framework to latest
+- Switch to rappu

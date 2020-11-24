@@ -9,7 +9,7 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
-
+@SuppressWarnings("unused")
 public class PluginConfig {
 
 	private Configuration config;
@@ -18,8 +18,9 @@ public class PluginConfig {
 
 	private File file;
 
+
 	private PluginConfig() {
-		this.instance = this;
+		instance = this;
 
 		try {
 	    	file = new File(Main.get().getDataFolder(), "config.yml");
@@ -102,21 +103,33 @@ public class PluginConfig {
     	return config.getString("discord.todo-chan-id");
     }
 
-    public String getDatabaseURL() {
-    	return config.getString("database.url");
-    }
+	public String getECDatabase() {
+		return config.getString("ec_database.host");
+	}
+	public String getECDatabaseName() { return config.getString("ec_database.database"); }
+	public int getECDatabasePort() {
+		return config.getInt("ec_database.port");
+	}
+	public String getECDatabaseUser() {
+		return config.getString("ec_database.user");
+	}
+	public String getECDatabasePassword() {
+		return config.getString("ec_database.pass");
+	}
 
-    public String getDatabaseUser() {
-    	return config.getString("database.user");
-    }
-
-    public String getDatabasePassword() {
-    	return config.getString("database.pass");
-    }
-
-    public Integer getDatabaseThreads() {
-    	return config.getInt("database.threads");
-    }
+	public String getDatabase() {
+		return config.getString("ec_database.host");
+	}
+	public String getDatabaseName() { return config.getString("ec_database.database"); }
+	public int getDatabasePort() {
+		return config.getInt("ec_database.port");
+	}
+	public String getDatabaseUser() {
+		return config.getString("ec_database.user");
+	}
+	public String getDatabasePassword() {
+		return config.getString("ec_database.pass");
+	}
 
     public List<String> getMuteCommands() {
     	return config.getStringList("mute-commands");
@@ -157,6 +170,8 @@ public class PluginConfig {
     public List<String> getAnnouncements() { return config.getStringList("announcements"); }
 
     public int getAnnouncementCooldown() { return config.getInt("announcement-interval"); }
+
+    public boolean useElytraCoreSupport() { return config.getBoolean("use-elytracore-support"); }
 
     public static PluginConfig get() {
 		if (instance == null) {

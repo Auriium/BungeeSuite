@@ -18,10 +18,10 @@ import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
 
 public class DiscordListener implements Listener{
-	
+
 	private Main instance;
-	
-	private TextChannel channel = null;
+
+	private TextChannel channel;
 	
 	public DiscordListener(Main plugin, String id) {
 		this.instance = plugin;
@@ -62,6 +62,7 @@ public class DiscordListener implements Listener{
 		
 		if (event.isCommand()) { return; }
 		if (event.isCancelled()) { return; }
+
 		
 		String msg = event.getMessage().replaceAll("@everyone", "*snip*").replaceAll("@here", "*snip*");
 		

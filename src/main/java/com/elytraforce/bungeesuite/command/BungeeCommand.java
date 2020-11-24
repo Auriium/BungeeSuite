@@ -2,36 +2,36 @@ package com.elytraforce.bungeesuite.command;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.config.PluginConfig;
+import com.elytraforce.bungeesuite.storage.SQLStorage;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public abstract class BungeeCommand extends Command implements TabExecutor {
 
-    private Main plugin;
+    private final Main plugin;
     private PluginConfig config;
+    private final SQLStorage storage;
 
     public BungeeCommand(Main plugin, String name, String permission) {
         super(name, permission);
         this.plugin = plugin;
         this.config = PluginConfig.get();
+        this.storage = SQLStorage.get();
     }
 
     public Main getPlugin() {
         return plugin;
     }
     public PluginConfig getConfig() { return this.config; }
+    public SQLStorage getStorage() { return  this.storage; }
 
     @Override
     public final void execute(final CommandSender commandSender, final String[] args) {
@@ -40,51 +40,20 @@ public abstract class BungeeCommand extends Command implements TabExecutor {
 
     public abstract void onCommand(CommandSender sender, String[] args);
 
-
     protected String getReasonFromArgs(int index, String[] args) {
         return Arrays.stream(args, index, args.length).collect(Collectors.joining(" "));
     }
 
-    protected UUID getUuidFromArg(Connection connection, int index, String[] args) throws SQLException {
-        return getUuidFromArg(connection, args[index]);
+    protected CompletableFuture<UUID> getUuidFromArg(int index, String[] args) {
+        return getUuidFromArg(args[index]);
     }
 
-    protected UUID getUuidFromArg(Connection connection, String arg) throws SQLException {
-        try {
-            return UUID.fromString(arg);
-        } catch (IllegalArgumentException e) {
-            ProxiedPlayer online = getPlugin().getProxy().getPlayer(arg);
-            if (online != null) {
-                return online.getUniqueId();
-            }
-            try (PreparedStatement ps = connection.prepareStatement("SELECT id " +
-                    "FROM player_login " +
-                    "WHERE name = ? " +
-                    "ORDER BY time DESC " +
-                    "LIMIT 1")) {
-                ps.setString(1, arg);
-                try (ResultSet rs = ps.executeQuery()) {
-                    return rs.next() ? UUID.fromString(rs.getString("id")) : null;
-                }
-            }
-        }
+    protected CompletableFuture<UUID> getUuidFromArg(String arg) {
+        return  storage.getIDFromUsername(arg);
     }
 
-    protected String getNameFromUuid(Connection connection, UUID uuid) throws SQLException {
-        ProxiedPlayer online = getPlugin().getProxy().getPlayer(uuid);
-        if (online != null) {
-            return online.getName();
-        }
-        try (PreparedStatement ps = connection.prepareStatement("SELECT name " +
-                "FROM player_login " +
-                "WHERE id = ? " +
-                "ORDER BY time DESC " +
-                "LIMIT 1")) {
-            ps.setString(1, uuid.toString());
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getString("name") : null;
-            }
-        }
+    protected CompletableFuture<String> getNameFromUuid(UUID uuid) {
+        return storage.getUsernameFromID(uuid);
     }
 
 

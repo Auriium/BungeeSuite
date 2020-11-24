@@ -1,21 +1,19 @@
 package com.elytraforce.bungeesuite.antiswear;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.antiswear.filters.BasicIntelligentFilter;
-
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class Filters {
 
-    private List<Filter> filters = new ArrayList<Filter>();
-    private PluginConfig config;
+    private List<Filter> filters = new ArrayList<>();
+    private final PluginConfig config;
 
     public Filters() {
         this.config = PluginConfig.get();

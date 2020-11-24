@@ -53,8 +53,54 @@ public class TodoCommand extends DiscordCommand {
                     m.edit(blist.get(0));
                 }
             });
+        } else if (args[1].equalsIgnoreCase("revoke")){
+            if (!isNumeric(args[2])) { DiscordController.incorrectArgProvided(event.getChannel(), 2); }
+
+            DiscordController.api.getMessageById(args[2], DiscordController.api.getTextChannelById(PluginConfig.get().getDiscordTodoID()).get()).whenComplete((m, e) -> {
+                if (e != null) {
+                    DiscordController.incorrectMessageID(event.getChannel());
+                } else {
+                    ArrayList<EmbedBuilder> blist = new ArrayList<>();
+
+                    m.getEmbeds().forEach(c -> {
+                        blist.add(c.toBuilder().setColor(Color.red));
+                        if (!c.getTitle().get().contains("TODO")) {
+                            EmbedBuilder builder = new EmbedBuilder()
+                                    .setTitle("ERROR")
+                                    .setColor(Color.red)
+                                    .setDescription("That is not a TODO item!");
+                            event.getChannel().sendMessage(builder);
+                        }
+                    });
+
+                    m.edit(blist.get(0));
+                }
+            });
+        } else if (args[1].equalsIgnoreCase("progress")){
+            if (!isNumeric(args[2])) { DiscordController.incorrectArgProvided(event.getChannel(), 2); }
+
+            DiscordController.api.getMessageById(args[2], DiscordController.api.getTextChannelById(PluginConfig.get().getDiscordTodoID()).get()).whenComplete((m, e) -> {
+                if (e != null) {
+                    DiscordController.incorrectMessageID(event.getChannel());
+                } else {
+                    ArrayList<EmbedBuilder> blist = new ArrayList<>();
+
+                    m.getEmbeds().forEach(c -> {
+                        blist.add(c.toBuilder().setColor(Color.orange));
+                        if (!c.getTitle().get().contains("TODO")) {
+                            EmbedBuilder builder = new EmbedBuilder()
+                                    .setTitle("ERROR")
+                                    .setColor(Color.red)
+                                    .setDescription("That is not a TODO item!");
+                            event.getChannel().sendMessage(builder);
+                        }
+                    });
+
+                    m.edit(blist.get(0));
+                }
+            });
         } else {
-            DiscordController.unknownSubCommand(event.getChannel(),args[1],"add","complete");
+            DiscordController.unknownSubCommand(event.getChannel(),args[1],"add","complete", "revoke", "progress");
         }
     }
 

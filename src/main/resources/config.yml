@@ -1,13 +1,27 @@
 database:
-  url: jdbc:mysql://172.17.0.1:3306/punishments
-  user: owners
-  pass: DX$;xFeuZ7YAyre`
-  threads: 1
+  database: "shitbitch"
+  user: "owners"
+  password: "DX$;xFeuZ7YAyre`"
+  port: 3306
+  host: 172.17.0.1
+
 prefix: '&9&lCORE &7>> &r'
 discord-prefix: '&9&lDISCORD &7>> &r'
 announce-prefix: '&d&lANNOUNCE &7>> &r'
+
 maintenance: true
-mute-commands: []
+use-elytracore-support: true
+ec_database:
+  database: "minecraft"
+  user: "owners"
+  password: "DX$;xFeuZ7YAyre`"
+  port: 3306
+  host: 172.17.0.1
+
+mute-commands:
+  - "pm"
+  - "msg"
+  - "r"
 discord:
   token: NzcyMTc1NjQ0OTU1NTA4NzM3.X522nA.mSA7ZmYBC04kT2KHwpLDLXJ7DLs
   monitor-chan-id: '766511575146168380'
@@ -16,52 +30,11 @@ discord:
 motd:
   top: '&b&lElytra&f&lForce &e&lNetwork &72.0'
   bottom: '&9A Huge Update - &f&oComing Soon!'
-blocked-commands:
-  - about
-  - bukkit:about
-  - bukkit:?
-  - bukkit:me
-  - bukkit:help
-  - bukkit:pl
-  - bukkit:plugins
-  - bukkit:ver
-  - bukkit:version
-  - icanhasbukkit
-  - info
-  - '?'
-  - calc
-  - eval
-  - /eval
-  - /calc
-  - ess
-  - calc
-  - cs
-  - kitbattle
-  - kitbattleadvanced
-  - kb
-  - ttt
-  - mttt
-  - csp
-  - crackshot
-  - ama
-  - advancedmobarena
-  - mobarena
-  - eval
-  - pl
-  - crackshotplus
-  - mythicmobs
-  - survivalgames
-  - deluxehub
-  - sg
-  - wizards
-  - plugins
-  - plugin
-  - ver
-  - version
 redis:
-  ip: 172.17.0.1
-  port: 6379
-  password: ''
+  ip: redis-11702.c60.us-west-1-2.ec2.cloud.redislabs.com
+  port: 11702
+  password: "q6g56bbvnS8jQRdmHm3Kp65qGteQ7kCH"
+
 restartTime: '2:00'
 restartTimeZone: PST
 warnings:

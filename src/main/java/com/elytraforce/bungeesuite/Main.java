@@ -7,23 +7,18 @@ import com.elytraforce.bungeesuite.command.*;
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
 import com.elytraforce.bungeesuite.listeners.*;
+import com.elytraforce.bungeesuite.elytracore.shitcunpp;
+import com.elytraforce.bungeesuite.localChat.ChatSpyListener;
 import com.elytraforce.bungeesuite.model.Ban;
-import com.elytraforce.bungeesuite.model.IpBan;
 import com.elytraforce.bungeesuite.model.Mute;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.zaxxer.hikari.HikariDataSource;
+import com.elytraforce.bungeesuite.punish.PunishController;
+import com.elytraforce.bungeesuite.storage.SQLStorage;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
-import javax.sql.DataSource;
 
-import org.apache.ibatis.jdbc.ScriptRunner;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,7 +26,6 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 
 public class Main extends Plugin {
 
@@ -39,19 +33,17 @@ public class Main extends Plugin {
     private PluginConfig config;
     private ChatSpyListener chatSpyListener;
 
-    private HikariDataSource hikariDataSource;
-    private Map<UUID, Mute> activeMute = new ConcurrentHashMap<>();
 
     private Filters filters;
 
     public static Main get() { return instance; }
     public Filters getFilters() { return this.filters; }
-
     public ChatSpyListener getChatSpy() { return this.chatSpyListener; }
 
     @Override
     public void onDisable() {
-
+        SQLStorage.get().shutdown();
+        //shitcunpp.get().shutdown();
     }
 
     @Override
@@ -60,13 +52,9 @@ public class Main extends Plugin {
 
     	config = PluginConfig.get();
 
-        try {
-            loadHikariDataSource();
-            upgradeDatabase();
-        } catch (IOException | SQLException e) {
-        	getLogger().log(Level.SEVERE, "Data failed to load",e);
-            return;
-        }
+    	//register database
+        SQLStorage.get();
+        PunishController.get();
 
         getProxy().registerChannel("ConsoleBanUser");
         // Register commands
@@ -75,7 +63,6 @@ public class Main extends Plugin {
         getProxy().getPluginManager().registerCommand(this, new InfoCommand(this));
         getProxy().getPluginManager().registerCommand(this, new MuteCommand(this));
         getProxy().getPluginManager().registerCommand(this, new UnbanCommand(this));
-        getProxy().getPluginManager().registerCommand(this, new UnblacklistCommand(this));
         getProxy().getPluginManager().registerCommand(this, new UnmuteCommand(this));
         getProxy().getPluginManager().registerCommand(this, new WarnCommand(this));
         getProxy().getPluginManager().registerCommand(this, new SpyCommand(this));
@@ -84,7 +71,6 @@ public class Main extends Plugin {
         getProxy().getPluginManager().registerCommand(this, new KickCommand(this));
 
         getProxy().getPluginManager().registerListener(this, new PlayerActivityListener(this));
-        getProxy().getPluginManager().registerListener(this, new ServerMessageListener(this));
         getProxy().getPluginManager().registerListener(this, new MOTDListener(this));
         getProxy().getPluginManager().registerListener(this, chatSpyListener = new ChatSpyListener(this));
 
@@ -92,12 +78,17 @@ public class Main extends Plugin {
         RestartController.get();
         DiscordController.get();
 
+        if (config.useElytraCoreSupport()) {
+            shitcunpp.get();
+        }
+
+
         this.filters = new Filters();
 
     }
 
     // Creates the Hikari database connection
-    private void loadHikariDataSource() throws IOException, SQLException {
+    /*private void loadHikariDataSource() throws IOException, SQLException {
         HikariDataSource dataSource = new HikariDataSource();
         getLogger().info("About to open connection with database " + config.getDatabaseURL()
         + " user " + config.getDatabaseUser() + " password " + config.getDatabasePassword());
@@ -109,10 +100,10 @@ public class Main extends Plugin {
                 .setNameFormat("hikari-sql-pool-%d").build());
         this.hikariDataSource = dataSource;
         this.upgradeDatabase();
-    }
+    }*/
 
     // Creates and updates the SQL schema
-    private void upgradeDatabase() throws IOException, SQLException {
+    /*private void upgradeDatabase() throws IOException, SQLException {
         getLogger().info("Upgrading database using schema.ddl");
         InputStream schemaDdl = getResourceAsStream("schema.ddl");
         InputStreamReader schemaReader = new InputStreamReader(schemaDdl);
@@ -123,17 +114,13 @@ public class Main extends Plugin {
         runner.runScript(schemaReader);
         connection.close(); // Return the connection to the pool
         getLogger().info("Database successfully upgraded");
-    }
+    }*/
 
     public void broadcast(String message, String permission) {
     	String last = ChatColor.translateAlternateColorCodes('&', message);
         getProxy().getPlayers().stream().filter(p -> p.hasPermission(permission))
                 .forEach(p -> p.sendMessage(last));
         getProxy().getConsole().sendMessage(last);
-    }
-
-    public DataSource getDatabase() {
-        return hikariDataSource;
     }
 
     public UUID getUniqueId(CommandSender sender) {
@@ -145,26 +132,9 @@ public class Main extends Plugin {
         return uuid == null ? null : uuid.toString();
     }
 
-    public Ban getActiveBan(UUID banned) throws SQLException {
+    /*public Ban getActiveBan(UUID banned) throws SQLException {
         try (Connection connection = hikariDataSource.getConnection()) {
             return getActiveBan(connection, banned);
-        }
-    }
-
-    //TODO; do this later lmfao
-    public boolean getDiscordEnabled(Connection connection, UUID id) throws SQLException{
-    	try (PreparedStatement ps = connection.prepareStatement("SELECT * " +
-                "FROM player_settings " +
-                "WHERE banned_id = ? " +
-                "AND type = 'ban'")) {
-            ps.setString(1, id.toString());
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getBoolean("");
-                } else {
-                    return false;
-                }
-            }
         }
     }
 
@@ -188,30 +158,11 @@ public class Main extends Plugin {
                 }
             }
         }
-    }
+    }*/
 
-    public void registerMute(UUID player, Mute mute) {
-        activeMute.put(player, mute);
-    }
 
-    public void unregisterMute(ProxiedPlayer player) {
-        activeMute.remove(player.getUniqueId());
-    }
 
-    public Mute getActiveMute(ProxiedPlayer player) {
-        Mute mute = activeMute.get(player.getUniqueId());
-        if (mute != null) {
-            // Check if the mute is expired
-            if (mute.getExpiry() != null && mute.getExpiry().getTime() < System.currentTimeMillis()) {
-                activeMute.remove(player.getUniqueId());
-                return null;
-            }
-            return mute;
-        }
-        return null;
-    }
-
-    public Mute getActiveMute(UUID banned) throws SQLException {
+/*    public Mute getActiveMute(UUID banned) throws SQLException {
         try (Connection connection = hikariDataSource.getConnection()) {
             return getActiveMute(connection, banned);
         }
@@ -258,6 +209,6 @@ public class Main extends Plugin {
                         : null;
             }
         }
-    }
+    }*/
 
 }

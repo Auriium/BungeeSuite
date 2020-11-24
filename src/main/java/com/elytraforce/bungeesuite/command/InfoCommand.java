@@ -1,17 +1,17 @@
 package com.elytraforce.bungeesuite.command;
 
+import com.elytraforce.bungeesuite.Main;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import java.sql.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.UUID;
-import java.util.logging.Level;
-
-import com.elytraforce.bungeesuite.Main;
-import com.elytraforce.bungeesuite.util.TimeFormatUtil;
 
 public class InfoCommand extends BungeeCommand {
 
@@ -39,115 +39,33 @@ public class InfoCommand extends BungeeCommand {
             return;
         }
 
-        try (Connection connection = getPlugin().getDatabase().getConnection()) {
-            UUID uuid = getUuidFromArg(connection, 0, args);
-
+        getUuidFromArg(0,args).thenAccept(uuid -> {
             if (uuid == null) {
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
             } else {
-                int maxPages = getMaxPages(connection, uuid);
-
-                if (maxPages == 0) {
-                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Target player has no punishments on record");
-                    return;
-                }
-
-                if (page + 1 > maxPages || page < 0) {
-                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "You must enter a page number between 1 and " + maxPages);
-                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /info <player> [page]");
-                    return;
-                }
-
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.GRAY + "Fetching punishment information...");
-                try (PreparedStatement pageEntries = connection.prepareStatement("SELECT " +
-                        "(SELECT name FROM player_login pl WHERE pl.id = p.sender_id ORDER BY time DESC LIMIT 1) name, " +
-                        "pr.sender_id reverse_sender_id, " +
-                        "pr.reason reverse_reason, " +
-                        "pr.creation_date reverse_date, " +
-                        "p.reason, " +
-                        "p.creation_date, " +
-                        "expiry_date, " +
-                        "type " +
-                        "FROM player_punish p " +
-                        "LEFT JOIN player_punish_reverse pr " +
-                        "ON pr.punish_id = p.id " +
-                        "WHERE p.banned_id = ? " +
-                        "ORDER BY creation_date DESC " +
-                        "LIMIT ?, ?")) {
+                getStorage().getPunishments(uuid).thenAccept(results -> {
 
-                    int amount = 0;
-                    pageEntries.setString(1, uuid.toString());
-                    pageEntries.setInt(2, page * ENTRIES_PER_PAGE);
-                    pageEntries.setInt(3, (page * ENTRIES_PER_PAGE) + ENTRIES_PER_PAGE);
+                    if (page + 1 > this.calculatePages(results.size()) || page < 0) {
+                        sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "You must enter a page number between 1 and " + this.calculatePages(results.size()));
+                        sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /info <player> [page]");
+                        return;
+                    }
 
-                    try (ResultSet rs = pageEntries.executeQuery()) {
-                        sender.sendMessage(getConfig().getPrefix() + ChatColor.translateAlternateColorCodes('&',
-                                String.format("&cPunishments of %s &7(Page %d/%d)", args[0], page + 1, maxPages)));
-                        while (rs.next()) {
-                            String raw = rs.getString("name");
-                            String name = raw == null ? "Console" : raw;
-                            String reason = rs.getString("reason");
-                            Timestamp created = rs.getTimestamp("creation_date");
-                            Timestamp expiry = rs.getTimestamp("expiry_date");
-                            String type = rs.getString("type");
-
-                            ComponentBuilder builder = new ComponentBuilder(" ");
-                            ComponentBuilder hoverBuilder = new ComponentBuilder("Reason: ").color(ChatColor.GRAY)
-                                    .append(reason).color(ChatColor.WHITE);
-
-                            if (rs.getObject("reverse_date") != null) {
-                                builder.append("").strikethrough(true);
-                                String reversed = rs.getString("reverse_sender_id");
-                                String reverseName = reversed == null ? "Console" : getNameFromUuid(connection, UUID.fromString(reversed));
-
-                                hoverBuilder.append("\n").append("Reversed By: ").color(ChatColor.GRAY)
-                                        .append(reverseName).color(ChatColor.WHITE);
-
-                                String reverseReason = rs.getString("reverse_reason");
-                                if (reverseReason != null) {
-                                    hoverBuilder.append("\n").append("Reverse Reason: ").color(ChatColor.GRAY)
-                                            .append(reverseReason).color(ChatColor.WHITE);
-                                }
-                            }
-
-                            builder.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverBuilder.create()));
-
-                            if (type.equalsIgnoreCase("warn")) {
-                                builder.append("[Warn]").color(ChatColor.YELLOW).append(" ");
-                            } else if (type.equalsIgnoreCase("mute")) {
-                                builder.append("[Mute]").color(ChatColor.GOLD).append(" ").color(ChatColor.BOLD);
-                            } else if(type.equalsIgnoreCase("kick")) {
-                                builder.append("[Kick]").color(ChatColor.GRAY).append(" ").color(ChatColor.BOLD);
-                            } else {
-                                builder.append("[Ban]").color(ChatColor.RED).append("  ").color(ChatColor.BOLD);
-                            }
-
-                            long duration = expiry == null ? -1 : expiry.getTime() - created.getTime();
-                            builder.strikethrough(false).append(dateFormat.format(created)).color(ChatColor.GREEN)
-                                    .append(" ").append(name).color(ChatColor.GRAY)
-                                    .append(" (").color(ChatColor.RED)
-                                    .append(duration == -1 ? "Permanent" : TimeFormatUtil.toDetailedDate(0, duration, true))
-                                    .append(")");
-
-                            if (expiry != null && expiry.getTime() < System.currentTimeMillis()) {
-                                builder.append("(Expired)").color(ChatColor.RED);
-                            }
-
+                    if (results.size() == 0) {
+                        sender.sendMessage(ChatColor.RED + " None!");
+                    } else {
+                        for (ComponentBuilder builder : results) {
                             sender.sendMessage(builder.create());
-
-                            amount++;
-                        }
-
-                        if (amount == 0) {
-                            sender.sendMessage(ChatColor.RED + " None!");
                         }
                     }
-                }
+                });
             }
-        } catch (SQLException e) {
-            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "An error occurred when getting info of " + args[0]);
-            getPlugin().getLogger().log(Level.SEVERE, "Failed to check info", e);
-        }
+        });
+    }
+
+    private int calculatePages(int amount) {
+        return (int) Math.ceil(amount / 10.0);
     }
 
     private int getMaxPages(Connection connection, UUID id) throws SQLException {

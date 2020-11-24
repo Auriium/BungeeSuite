@@ -1,11 +1,18 @@
 package com.elytraforce.bungeesuite.util;
 
+import com.elytraforce.bungeesuite.Main;
 import net.md_5.bungee.api.ChatColor;
+
+import java.util.logging.Level;
 
 
 public class AuriBungeeUtil {
 	
 	private final static int CENTER_PX = 154;
+
+	public static void logError(String string) {
+        Main.get().getLogger().log(Level.SEVERE,string);
+    }
 
 	public static String colorString(String string) {
 	    return ChatColor.translateAlternateColorCodes('&',string);

@@ -1,7 +1,6 @@
 package com.elytraforce.bungeesuite.discord;
 
 import com.elytraforce.bungeesuite.Main;
-import com.elytraforce.bungeesuite.announce.RestartController;
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.commands.ChangelogCommand;
 import com.elytraforce.bungeesuite.discord.commands.ShitDevCommand;
@@ -29,7 +28,6 @@ public class DiscordController {
 	public static String token = null; // Bot token
 	public static DiscordApi api = null; // Api Instance
 	private static DiscordController instance;
-	private PluginConfig config;
 
 	public static void incorrectArgProvided(TextChannel chan, int position) {
 		EmbedBuilder builder = new EmbedBuilder()
@@ -77,7 +75,7 @@ public class DiscordController {
 	// real shit starts here
 	
 	private DiscordController() {
-		this.config = PluginConfig.get();
+		PluginConfig config = PluginConfig.get();
 		DiscordController.token = config.getDiscordToken();
 		try {
 			api = new DiscordApiBuilder().setToken(token).login().join();
@@ -86,8 +84,8 @@ public class DiscordController {
 		}
         Main.get().getLogger().info("Bot Invite Link: " + api.createBotInvite());
 
-        api.addReconnectListener(event -> { Main.get().getLogger().info(("Reconnected to Discord.")); });
-        api.addResumeListener(event -> { Main.get().getLogger().info(("Resumed connection to Discord.")); });
+        api.addReconnectListener(event -> Main.get().getLogger().info(("Reconnected to Discord.")));
+        api.addResumeListener(event -> Main.get().getLogger().info(("Resumed connection to Discord.")));
         api.setMessageCacheSize(10, 60*60);
 
         api.addMessageCreateListener(new ChangelogCommand());
@@ -98,12 +96,7 @@ public class DiscordController {
         api.addMessageCreateListener(new AntiswearReaction());
         api.addMessageEditListener(new AntiswearEditReaction());
 
-        Main.get().getProxy().getScheduler().schedule(Main.get(), new Runnable() {
-			@Override
-			public void run() {
-				api.updateActivity(ActivityType.PLAYING, "ElytraForce | " + Main.get().getProxy().getOnlineCount() + " are online!");
-			}
-        }, 0L, 20L, TimeUnit.SECONDS);
+        Main.get().getProxy().getScheduler().schedule(Main.get(), () -> api.updateActivity(ActivityType.PLAYING, "ElytraForce | " + Main.get().getProxy().getOnlineCount() + " are online!"), 0L, 20L, TimeUnit.SECONDS);
 
 		Main.get().getProxy().getPluginManager().registerListener(Main.get(), new DiscordListener(Main.get(), config.getDiscordChannelID()));
 	}

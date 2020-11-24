@@ -14,7 +14,7 @@ public class SpyCommand extends BungeeCommand{
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCommand(CommandSender sender, String[] args) {
-        if (args.length < 0) {
+        if (args.length > 1) {
             sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /cspy");
             return;
         }

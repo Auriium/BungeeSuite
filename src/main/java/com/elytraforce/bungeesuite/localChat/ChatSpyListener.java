@@ -1,4 +1,4 @@
-package com.elytraforce.bungeesuite.listeners;
+package com.elytraforce.bungeesuite.localChat;
 
 import java.util.HashMap;
 import com.elytraforce.bungeesuite.Main;

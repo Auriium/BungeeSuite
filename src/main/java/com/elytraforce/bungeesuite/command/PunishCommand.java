@@ -1,24 +1,27 @@
 package com.elytraforce.bungeesuite.command;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.CommandSender;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.UUID;
-import java.util.logging.Level;
-
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.model.Punishment;
+import com.elytraforce.bungeesuite.punish.PunishController;
 import com.elytraforce.bungeesuite.util.TimeFormatUtil;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.CommandSender;
+
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class PunishCommand extends BungeeCommand {
 
-    private String usage;
+    private final String usage;
+    private final PunishController punishController;
 
     protected PunishCommand(Main plugin, String name, String permission, String usage) {
         super(plugin, name, permission);
         this.usage = ChatColor.RED + "Usage: " + usage;
+        punishController = PunishController.get();
     }
+
+    public PunishController getPunishController() { return punishController; }
 
     @SuppressWarnings("deprecation")
 	@Override
@@ -27,48 +30,43 @@ public abstract class PunishCommand extends BungeeCommand {
             sender.sendMessage(getConfig().getPrefix() + usage);
             return;
         }
-
-        // ban <player> [duration] <reason>
-        try (Connection connection = getPlugin().getDatabase().getConnection()) {
-            UUID id = getUuidFromArg(connection, 0, args);
-
-            if (id == null) {
+        getUuidFromArg(0, args).thenAccept(uuid -> {
+            if (uuid == null) {
                 // Never joined the server
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
             } else {
-                Punishment<?> punishment = getExistingPunishment(connection, id);
-                if (punishment != null) {
-                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That user has already been dealt with");
-                } else {
-                    String reason;
-                    long expiryDate;
-                    long duration = TimeFormatUtil.parseIntoMilliseconds(args[1]);
-                    if (duration == -1) {
-                        if (!sender.hasPermission("elytraforce.mod")) {
-                            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Please specify a valid duration");
+                CompletableFuture<? extends Punishment<UUID>> punishment = getExistingPunishment(uuid);
+                punishment.thenAccept(pun -> {
+                    if (pun != null) {
+                        sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That user has already been dealt with");
+                    } else {
+                        String reason;
+                        long expiryDate;
+                        long duration = TimeFormatUtil.parseIntoMilliseconds(args[1]);
+                        if (duration == -1) {
+                            if (!sender.hasPermission("elytraforce.mod")) {
+                                sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Please specify a valid duration");
+                                sender.sendMessage(usage);
+                                return;
+                            }
+                            expiryDate = -1;
+                            reason = getReasonFromArgs(1, args);
+                        } else if (args.length < 3) {
                             sender.sendMessage(usage);
                             return;
+                        } else {
+                            expiryDate = System.currentTimeMillis() + duration;
+                            reason = getReasonFromArgs(2, args);
                         }
-                        expiryDate = -1;
-                        reason = getReasonFromArgs(1, args);
-                    } else if (args.length < 3) {
-                        sender.sendMessage(usage);
-                        return;
-                    } else {
-                        expiryDate = System.currentTimeMillis() + duration;
-                        reason = getReasonFromArgs(2, args);
-                    }
 
-                    issueNewPunishment(sender, connection, args[0], id, expiryDate, reason);
-                }
+                        issueNewPunishment(sender, args[0], uuid, expiryDate, reason);
+                    }
+                });
             }
-        } catch (SQLException e) {
-            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "An error occurred when issuing the ban");
-            getPlugin().getLogger().log(Level.SEVERE, "Failed to issue ban", e);
-        }
+        });
     }
 
-    public abstract Punishment<?> getExistingPunishment(Connection connection, UUID id);
+    public abstract CompletableFuture<? extends Punishment<UUID>> getExistingPunishment(UUID id);
     
-    public abstract void issueNewPunishment(CommandSender sender, Connection connection, String targetName, UUID id, long expiry, String reason);
+    public abstract void issueNewPunishment(CommandSender sender, String targetName, UUID id, long expiry, String reason);
 }

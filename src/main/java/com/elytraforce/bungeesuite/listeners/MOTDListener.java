@@ -11,8 +11,8 @@ import net.md_5.bungee.event.EventHandler;
 
 public class MOTDListener implements Listener{
 
-	private Main plugin;
-	private PluginConfig config;
+	private final Main plugin;
+	private final PluginConfig config;
 
 	public MOTDListener(Main main) {
 		this.plugin = main;

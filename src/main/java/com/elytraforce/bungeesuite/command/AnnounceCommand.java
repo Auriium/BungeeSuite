@@ -2,8 +2,6 @@ package com.elytraforce.bungeesuite.command;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.announce.AnnounceController;
-import com.elytraforce.bungeesuite.announce.RestartController;
-
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -17,9 +15,8 @@ public class AnnounceCommand extends BungeeCommand {
 	@Override
 	public void onCommand(CommandSender sender, String[] args) {
 		if (!(sender instanceof ProxiedPlayer)) { return; }
-		ProxiedPlayer player = (ProxiedPlayer) sender;
-		
-		 if (args.length < 2) {
+
+		if (args.length < 2) {
 	            sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /announce <message/title/actionbar> <message>");
 	            return;
 	     }
