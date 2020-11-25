@@ -18,7 +18,7 @@ public class AltsCommand extends BungeeCommand {
             return;
         }
 
-        getStorage().getIDFromUsername("").thenAccept(s -> getStorage().getAlts(s).thenAccept(names -> {
+        getStorage().getIDFromUsername(args[0]).thenAccept(s -> getStorage().getAlts(s).thenAccept(names -> {
             if (names.isEmpty()) {
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Target player has no alternate accounts"); return;
             }

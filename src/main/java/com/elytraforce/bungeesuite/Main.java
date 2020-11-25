@@ -19,6 +19,8 @@ import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -81,7 +83,6 @@ public class Main extends Plugin {
         if (config.useElytraCoreSupport()) {
             shitcunpp.get();
         }
-
 
         this.filters = new Filters();
 

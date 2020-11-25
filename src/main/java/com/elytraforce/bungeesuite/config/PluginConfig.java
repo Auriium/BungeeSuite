@@ -118,17 +118,17 @@ public class PluginConfig {
 	}
 
 	public String getDatabase() {
-		return config.getString("ec_database.host");
+		return config.getString("database.host");
 	}
-	public String getDatabaseName() { return config.getString("ec_database.database"); }
+	public String getDatabaseName() { return config.getString("database.database"); }
 	public int getDatabasePort() {
-		return config.getInt("ec_database.port");
+		return config.getInt("database.port");
 	}
 	public String getDatabaseUser() {
-		return config.getString("ec_database.user");
+		return config.getString("database.user");
 	}
 	public String getDatabasePassword() {
-		return config.getString("ec_database.pass");
+		return config.getString("database.pass");
 	}
 
     public List<String> getMuteCommands() {

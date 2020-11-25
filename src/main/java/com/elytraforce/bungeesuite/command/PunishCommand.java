@@ -44,7 +44,7 @@ public abstract class PunishCommand extends BungeeCommand {
                         long expiryDate;
                         long duration = TimeFormatUtil.parseIntoMilliseconds(args[1]);
                         if (duration == -1) {
-                            if (!sender.hasPermission("elytraforce.mod")) {
+                            if (!sender.hasPermission("elytraforce.admin")) {
                                 sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Please specify a valid duration");
                                 sender.sendMessage(usage);
                                 return;

@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: de.exceptionflug:protocolize-api:1.6.6-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/de/exceptionflug/protocolize-api/1.6.6-SNAPSHOT/protocolize-api-1.6.6-20201106.234842-42.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/de/exceptionflug/protocolize-api/1.6.6-SNAPSHOT/protocolize-api-1.6.6-20201106.234842-42-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/de/exceptionflug/protocolize-api/1.6.6-SNAPSHOT/protocolize-api-1.6.6-20201106.234842-42-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

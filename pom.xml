@@ -66,10 +66,6 @@
                         	<pattern>org.slf4j</pattern>
                         	<shadedPattern>${project.groupId}.libs.slf4j</shadedPattern>
                         </relocation>
-                        <relocation>
-                            <pattern>dev.magicmq.rappu</pattern>
-                            <shadedPattern>${project.groupId}.libs.rappu</shadedPattern>
-                        </relocation>
                     </relocations>
                     
                 </configuration>
@@ -102,10 +98,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-    		<groupId>org.mybatis</groupId>
-    		<artifactId>mybatis</artifactId>
-    		<version>3.4.4</version>
-		</dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>3.4.5</version>
+        </dependency>
 		<dependency>
     		<groupId>org.javacord</groupId>
     		<artifactId>javacord</artifactId>
@@ -129,16 +125,9 @@
             <version>3.7</version>
         </dependency>
         <dependency>
-            <groupId>dev.magicmq</groupId>
-            <artifactId>rappu</artifactId>
-            <version>1.7-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>3.3.0</version>
-            <type>jar</type>
-            <scope>compile</scope>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+            <version>3.4.4</version>
         </dependency>
     </dependencies>
 </project>

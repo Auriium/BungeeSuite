@@ -1,7 +1,7 @@
 database:
   database: "shitbitch"
   user: "owners"
-  password: "DX$;xFeuZ7YAyre`"
+  pass: "DX$;xFeuZ7YAyre`"
   port: 3306
   host: 172.17.0.1
 
@@ -14,7 +14,7 @@ use-elytracore-support: true
 ec_database:
   database: "minecraft"
   user: "owners"
-  password: "DX$;xFeuZ7YAyre`"
+  pass: "DX$;xFeuZ7YAyre`"
   port: 3306
   host: 172.17.0.1
 

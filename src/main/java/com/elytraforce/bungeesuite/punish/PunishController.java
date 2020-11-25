@@ -4,6 +4,7 @@ import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.model.Mute;
 import com.elytraforce.bungeesuite.storage.SQLStorage;
+import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import com.elytraforce.bungeesuite.util.TimeFormatUtil;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -12,6 +13,7 @@ import net.md_5.bungee.api.event.ChatEvent;
 import net.md_5.bungee.api.event.LoginEvent;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
@@ -79,7 +81,9 @@ public class PunishController {
         UUID who = event.getConnection().getUniqueId();
         event.registerIntent(Main.get());
         try {
+            AuriBungeeUtil.logError("Attempting to check if the player is banned!");
             storage.getActiveBan(who).thenAccept(ban -> {
+                AuriBungeeUtil.logError("(Complete) BanCompleted");
                 if (ban != null) {
                     event.setCancelled(true);
                     String expiry = ban.getExpiry() == null ? "Permanent" : TimeFormatUtil.toDetailedDate(ban.getExpiry().getTime());
@@ -89,7 +93,9 @@ public class PunishController {
                                     "\nExpires: &7%s" +
                                     "\n\n&c&lAppeal at &7elytraforce.com", ban.getReason(), expiry)));
                 } else {
+                    AuriBungeeUtil.logError("Attempting to check if the player has banned alts!");
                     storage.getBannedAlts(who).thenAccept(list -> {
+                        AuriBungeeUtil.logError("(Complete) AltsCompleted");
                         if (!list.isEmpty()) {
                             if (list.size() > 5) {
                                 String formatted = list.stream().limit(3).collect(Collectors.joining("\n&c"));
@@ -106,9 +112,12 @@ public class PunishController {
                         }
                     });
 
+                    AuriBungeeUtil.logError("Attempting to track the login!");
                     storage.trackLogin(event.getConnection());
 
+                    AuriBungeeUtil.logError("Attempting to track the mute and accept it!");
                     storage.getActiveMute(who).thenAccept(mute -> {
+                        AuriBungeeUtil.logError("(Complete) MuteCompleted");
                         if (mute != null) {
                             registerMute(who, mute);
                         }
@@ -159,7 +168,11 @@ public class PunishController {
     }
 
     public void mutePlayer(CommandSender sender, String targetName, UUID id, long expiry, String reason) {
-        Mute mute = storage.mutePlayer(sender,targetName,id,expiry,reason);
+        storage.mutePlayer(sender,targetName,id,expiry,reason);
+
+        Timestamp created = new Timestamp(System.currentTimeMillis());
+        Mute mute = new Mute(Integer.parseInt(id.toString()),Main.get().getUniqueId(sender),id,reason,created,expiry == -1 ? null : new Timestamp(expiry));
+
         ProxiedPlayer target = main.getProxy().getPlayer(id);
         String timeFormatted = expiry == -1 ? "Permanent" : TimeFormatUtil.toDetailedDate(expiry, true);
         if (target != null) {

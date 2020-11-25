@@ -1,7 +1,7 @@
 package com.elytraforce.bungeesuite.elytracore;
 
 import com.elytraforce.bungeesuite.config.PluginConfig;
-import dev.magicmq.rappu.Database;
+import com.elytraforce.bungeesuite.rappu_b.Database;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.util.Objects;

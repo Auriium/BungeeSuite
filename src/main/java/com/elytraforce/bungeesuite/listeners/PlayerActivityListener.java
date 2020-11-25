@@ -29,7 +29,7 @@ public class PlayerActivityListener implements Listener {
     public void onPostLogin(PostLoginEvent event) {
     	if (config.getMaintenance()) {
          	ProxiedPlayer checkPlayer = event.getPlayer();
-        	if (!checkPlayer.hasPermission("elytraforce.helper") || !checkPlayer.hasPermission("elytraforce.tester")) {
+        	if (!checkPlayer.hasPermission("elytraforce.helper")) {
         		checkPlayer.disconnect(ChatColor.translateAlternateColorCodes('&',
                         String.format("&cDisconnected from &b&lElytra&f&lForce" +
                                 "\n\n&cWe are undergoing maintenance!" +

@@ -1,6 +1,7 @@
 package com.elytraforce.bungeesuite.command;
 
 import com.elytraforce.bungeesuite.Main;
+import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ComponentBuilder;
@@ -46,6 +47,7 @@ public class InfoCommand extends BungeeCommand {
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.GRAY + "Fetching punishment information...");
                 getStorage().getPunishments(uuid).thenAccept(results -> {
 
+                    AuriBungeeUtil.logError("pages: " + page + " | results: " + this.calculatePages(results.size()));
                     if (page + 1 > this.calculatePages(results.size()) || page < 0) {
                         sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "You must enter a page number between 1 and " + this.calculatePages(results.size()));
                         sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /info <player> [page]");
