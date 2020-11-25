@@ -13,4 +13,3 @@ A bungeecord side administration suite synced with MySQL
 - Improve antiswear
 - Reports
 - Update discord bot framework to latest
-- Switch to rappu

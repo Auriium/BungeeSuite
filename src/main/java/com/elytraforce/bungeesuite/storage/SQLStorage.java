@@ -5,6 +5,7 @@ import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.model.Ban;
 import com.elytraforce.bungeesuite.model.IpBan;
 import com.elytraforce.bungeesuite.model.Mute;
+import com.elytraforce.bungeesuite.rappu_b.Callback;
 import com.elytraforce.bungeesuite.rappu_b.Database;
 import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import com.elytraforce.bungeesuite.util.TimeFormatUtil;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 @SuppressWarnings("unused")
 public class SQLStorage {
@@ -52,7 +54,9 @@ public class SQLStorage {
         database.close();
     }
 
-    public void trackLogin(PendingConnection connection) {
+    public CompletableFuture<Integer> trackLogin(PendingConnection connection) {
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+
         String sql = "INSERT INTO player_login(id, name, ip_address) VALUES (?, ?, INET_ATON(?));";
 
         Object[] toSet = new Object[]{
@@ -61,11 +65,15 @@ public class SQLStorage {
                 connection.getAddress().getAddress().getHostAddress()
         };
 
-        database.updateAsync(sql,toSet,c -> {});
+        database.updateAsync(sql,toSet, future::complete);
+
+        return future;
     }
 
     //things we've learned retard - these cannot have fucking return values. do not try to completeAsync them either, they must be completed synchronously.
-    public void mutePlayer(String sender, String targetName, UUID id, long expiry, String reason) {
+    public CompletableFuture<Integer> mutePlayer(String sender, String targetName, UUID id, long expiry, String reason) {
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+
         String sql = "INSERT INTO player_punish(banned_id, sender_id, reason, creation_date, expiry_date, type) VALUES (?, ?, ?, ?, ?, 'mute');";
 
         Object[] toSet = new Object[]{
@@ -76,11 +84,14 @@ public class SQLStorage {
                 expiry == -1 ? null : new Timestamp(expiry)
         };
 
-        database.updateAsync(sql,toSet, c-> {});
+        database.updateAsync(sql,toSet, future::complete);
 
+        return future;
     }
 
-    public void kickPlayer(String sender, String targetName, UUID id, String reason) {
+    public CompletableFuture<Integer> kickPlayer(String sender, String targetName, UUID id, String reason) {
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+
         String sql = "INSERT INTO player_punish (banned_id, sender_id, reason, creation_date, expiry_date, type) VALUES (?, ?, ?, ?, ?, 'kick');";
 
         Object[] toSet = new Object[]{
@@ -91,9 +102,13 @@ public class SQLStorage {
                 null
         };
 
-        database.updateAsync(sql,toSet,c -> {});
+        database.updateAsync(sql,toSet, future::complete);
+
+        return future;
     }
-    public void banPlayer(String sender, String targetName, UUID id, long expiry, String reason) {
+    public CompletableFuture<Integer> banPlayer(String sender, String targetName, UUID id, long expiry, String reason) {
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+
         String sql = "INSERT INTO player_punish (banned_id, sender_id, reason, creation_date, expiry_date, type) VALUES (?, ?, ?, ?, ?, 'ban');";
 
         Object[] toSet = new Object[]{
@@ -104,10 +119,14 @@ public class SQLStorage {
                 expiry == -1 ? null : new Timestamp(expiry)
         };
 
-        database.updateAsync(sql,toSet,c -> {});
+        database.updateAsync(sql,toSet, future::complete);
+
+        return future;
     }
 
-    public void warnPlayer(String sender, String targetName, UUID id, long expiry, String reason) {
+    public CompletableFuture<Integer> warnPlayer(String sender, String targetName, UUID id, String reason) {
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+
         String sql = "INSERT INTO player_punish (banned_id, sender_id, reason, creation_date, expiry_date, type) VALUES (?, ?, ?, ?, ?, 'warn');";
 
         Object[] toSet = new Object[]{
@@ -115,10 +134,12 @@ public class SQLStorage {
                 sender,
                 reason,
                 new Timestamp(System.currentTimeMillis()),
-                expiry == -1 ? null : new Timestamp(expiry)
+                null
         };
 
-        database.updateAsync(sql,toSet,c -> {});
+        database.updateAsync(sql,toSet, future::complete);
+
+        return future;
     }
 
     public void unBanPlayer(Ban ban, CommandSender sender, String reason) {

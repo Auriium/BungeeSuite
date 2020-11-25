@@ -21,6 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("deprecated")
 public class PunishController {
 
     private static PunishController instance;
@@ -154,8 +155,8 @@ public class PunishController {
        return Objects.requireNonNullElseGet(instance, () -> instance = new PunishController());
     }
 
-    public void warnPlayer(CommandSender sender, String targetName, UUID id, Long expiry, String reason) {
-        storage.warnPlayer(main.getUniqueIdSafe(sender),targetName,id,expiry,reason);
+    public void warnPlayer(CommandSender sender, String targetName, UUID id, String reason) {
+        storage.warnPlayer(main.getUniqueIdSafe(sender),targetName,id,reason);
         ProxiedPlayer target = main.getProxy().getPlayer(id);
         if (target != null) {
             target.sendMessage(PluginConfig.get().getPrefix() + ChatColor.RED + "You were warned by " + sender.getName() + " for (" + reason + ")");
@@ -168,26 +169,24 @@ public class PunishController {
     }
 
     public void mutePlayer(CommandSender sender, String targetName, UUID id, long expiry, String reason) {
-        storage.mutePlayer(Main.get().getUniqueIdSafe(sender), targetName,id,expiry,reason);
-        AuriBungeeUtil.logError("continuing mute pC");
+        storage.mutePlayer(Main.get().getUniqueIdSafe(sender), targetName,id,expiry,reason).thenAccept(integer -> {
+            //this happens after the callback is done
+            Timestamp created = new Timestamp(System.currentTimeMillis());
 
-        Timestamp created = new Timestamp(System.currentTimeMillis());
+            ProxiedPlayer target = main.getProxy().getPlayer(id);
+            String timeFormatted = expiry == -1 ? "Permanent" : TimeFormatUtil.toDetailedDate(expiry, true);
 
-        AuriBungeeUtil.logError("getting player");
-        ProxiedPlayer target = main.getProxy().getPlayer(id);
-        String timeFormatted = expiry == -1 ? "Permanent" : TimeFormatUtil.toDetailedDate(expiry, true);
-        //test if this works
-        storage.getActiveMute(id).thenAccept(mute -> {
-            AuriBungeeUtil.logError("created mute");
-            if (target != null) {
-                registerMute(id, mute);
-                target.sendMessage(String.format(PluginConfig.get().getPrefix() + ChatColor.RED + "You were muted by %s for %s (%s)", sender.getName(), reason, timeFormatted));
+            storage.getActiveMute(id).thenAccept(mute -> {
+                assert mute != null;
+                if (target != null) {
+                    registerMute(id, mute);
+                    target.sendMessage(String.format(PluginConfig.get().getPrefix() + ChatColor.RED + "You were muted by %s for %s (%s)", sender.getName(), reason, timeFormatted));
+                }
                 String name = target == null ? targetName : target.getName();
                 main.broadcast(ChatColor.RED + String.format(PluginConfig.get().getPrefix() + "%s was muted by %s for %s (%s)", name, sender.getName(), reason, timeFormatted), "elytraforce.helper");
-            }
 
+            });
         });
-
     }
 
     public void kickPlayer(CommandSender sender, String targetName, UUID id, String reason) {

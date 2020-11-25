@@ -10,6 +10,7 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 public class InfoCommand extends BungeeCommand {
 
@@ -45,8 +46,6 @@ public class InfoCommand extends BungeeCommand {
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.GRAY + "Fetching punishment information...");
                 getStorage().getPunishments(uuid).thenAccept(results -> {
 
-                    AuriBungeeUtil.logError("pages: " + page + " | results: " + this.calculatePages(results.size()));
-
                     if (page + 1 > this.calculatePages(results.size()) || page < 0) {
                         sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "You must enter a page number between 1 and " + this.calculatePages(results.size()));
                         sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /info <player> [page]");
@@ -59,15 +58,17 @@ public class InfoCommand extends BungeeCommand {
                     if (results.size() == 0) {
                         sender.sendMessage(ChatColor.RED + " None!");
                     } else {
-                        sort(results,page).forEach(s-> sender.sendMessage(s.create()));
+                        for (ComponentBuilder b : sort(results).get(page)) {
+                            sender.sendMessage(b.create());
+                        }
                     }
                 });
             }
         });
     }
 
-    private ArrayList<ComponentBuilder> sort(ArrayList<ComponentBuilder> components, int page) {
-        return (ArrayList<ComponentBuilder>) Lists.partition(components,10).get(page);
+    private List<List<ComponentBuilder>> sort(ArrayList<ComponentBuilder> components) {
+        return Lists.partition(components,10);
     }
 
     private int calculatePages(int amount) {

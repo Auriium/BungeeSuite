@@ -2,6 +2,7 @@ package com.elytraforce.bungeesuite.command;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.punish.PunishController;
+import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -27,7 +28,7 @@ public class WarnCommand extends BungeeCommand {
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
             } else {
                 String reason = getReasonFromArgs(1, args);
-                PunishController.get().warnPlayer(sender,target.getName(),uuid,null,reason);
+                PunishController.get().warnPlayer(sender,target.getName(),uuid,reason);
             }
         });
 
