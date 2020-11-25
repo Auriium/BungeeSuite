@@ -6,28 +6,18 @@ import com.elytraforce.bungeesuite.antiswear.Filters;
 import com.elytraforce.bungeesuite.command.*;
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
-import com.elytraforce.bungeesuite.listeners.*;
 import com.elytraforce.bungeesuite.elytracore.shitcunpp;
+import com.elytraforce.bungeesuite.listeners.MOTDListener;
+import com.elytraforce.bungeesuite.listeners.PlayerActivityListener;
 import com.elytraforce.bungeesuite.localChat.ChatSpyListener;
-import com.elytraforce.bungeesuite.model.Ban;
-import com.elytraforce.bungeesuite.model.Mute;
 import com.elytraforce.bungeesuite.punish.PunishController;
 import com.elytraforce.bungeesuite.storage.SQLStorage;
-
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Main extends Plugin {
 
