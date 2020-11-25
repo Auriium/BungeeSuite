@@ -206,7 +206,6 @@ public class Database
                     debug("(Query) Successfully set objects. Executing the following: " + statement.toString().substring(statement.toString().indexOf('-') + 1));
                     ResultSet result = statement.executeQuery();
                     if (!shuttingDown) {
-                        debug("not shutting down!");
                         RunnableFuture<Void> task = new FutureTask<>(() -> {
                             try {
                                 callback.callback(result);
@@ -217,10 +216,8 @@ public class Database
                             }
                             return null;
                         });
-                        debug("starting the task!");
                         using.getProxy().getScheduler().runAsync(using,task);
                         try {
-                            debug("getting the task!");
                             task.get();
                         } catch (InterruptedException | ExecutionException e) {
                             logger.log(Level.SEVERE,"There was an error while waiting for the query callback to complete!");
@@ -229,11 +226,12 @@ public class Database
                         debug("(ResultSet)closed resultset!");
                         result.close();
                     } else {
-                        debug("Shutting down?");
                         try {
                             logger.log(Level.SEVERE,"SQL statement executed asynchronously during shutdown, so the synchronous callback was not run. This occurred during a query, so data will not be loaded.");
                             result.close();
-                        } catch (SQLException ignored) {}
+                        } catch (SQLException ignored) {
+
+                        }
                     }
                 } catch (SQLException e) {
                     logger.log(Level.SEVERE,"There was an error when querying the database!");

@@ -22,7 +22,6 @@ public class MuteCommand extends PunishCommand {
 
 	@Override
     public void issueNewPunishment(CommandSender sender, String targetName, UUID id, long expiry, String reason) {
-        getStorage().mutePlayer(sender,targetName,id,expiry,reason);
-        //getPunishController().mutePlayer(sender, targetName, id, expiry, reason);
+        getPunishController().mutePlayer(sender, targetName, id, expiry, reason);
     }
 }

@@ -2,17 +2,14 @@ package com.elytraforce.bungeesuite.command;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
+import com.google.common.collect.Lists;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.UUID;
+import java.util.ArrayList;
 
 public class InfoCommand extends BungeeCommand {
 
@@ -40,6 +37,7 @@ public class InfoCommand extends BungeeCommand {
             return;
         }
 
+        //TODO: pages
         getUuidFromArg(0,args).thenAccept(uuid -> {
             if (uuid == null) {
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
@@ -48,37 +46,32 @@ public class InfoCommand extends BungeeCommand {
                 getStorage().getPunishments(uuid).thenAccept(results -> {
 
                     AuriBungeeUtil.logError("pages: " + page + " | results: " + this.calculatePages(results.size()));
+
                     if (page + 1 > this.calculatePages(results.size()) || page < 0) {
                         sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "You must enter a page number between 1 and " + this.calculatePages(results.size()));
                         sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /info <player> [page]");
                         return;
                     }
 
+                    sender.sendMessage(getConfig().getPrefix() + ChatColor.translateAlternateColorCodes('&',
+                            String.format("&cPunishments of %s &7(Page %d/%d)", args[0], page + 1, this.calculatePages(results.size()))));
+
                     if (results.size() == 0) {
                         sender.sendMessage(ChatColor.RED + " None!");
                     } else {
-                        for (ComponentBuilder builder : results) {
-                            sender.sendMessage(builder.create());
-                        }
+                        sort(results,page).forEach(s-> sender.sendMessage(s.create()));
                     }
                 });
             }
         });
     }
 
+    private ArrayList<ComponentBuilder> sort(ArrayList<ComponentBuilder> components, int page) {
+        return (ArrayList<ComponentBuilder>) Lists.partition(components,10).get(page);
+    }
+
     private int calculatePages(int amount) {
         return (int) Math.ceil(amount / 10.0);
     }
 
-    private int getMaxPages(Connection connection, UUID id) throws SQLException {
-        try (PreparedStatement maxPages = connection.prepareStatement("SELECT count(*) / ? max_pages  " +
-                "FROM player_punish " +
-                "WHERE banned_id = ?")) {
-            maxPages.setInt(1, ENTRIES_PER_PAGE);
-            maxPages.setString(2, id.toString());
-            try (ResultSet rs = maxPages.executeQuery()) {
-                return rs.next() ? (int) Math.ceil(rs.getDouble("max_pages")) : -1;
-            }
-        }
-    }
 }

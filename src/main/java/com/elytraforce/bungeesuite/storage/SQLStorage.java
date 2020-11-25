@@ -39,7 +39,6 @@ public class SQLStorage {
                 .withPassword(PluginConfig.get().getDatabasePassword())
                 .withConnectionInfo(PluginConfig.get().getDatabase(), PluginConfig.get().getDatabasePort(), PluginConfig.get().getDatabaseName(),false)
                 .withDefaultProperties()
-                .withDebugLogging()
                 .open();
         try {
             database.createTablesFromSchema("table.ddl", Main.class);
@@ -66,19 +65,18 @@ public class SQLStorage {
     }
 
     //things we've learned retard - these cannot have fucking return values. do not try to completeAsync them either, they must be completed synchronously.
-    public void mutePlayer(CommandSender sender, String targetName, UUID id, long expiry, String reason) {
-        String sql = "INSERT INTO player_punish (banned_id, sender_id, reason, creation_date, expiry_date, type) VALUES (?, ?, ?, ?, ?, 'mute');";
+    public void mutePlayer(String sender, String targetName, UUID id, long expiry, String reason) {
+        String sql = "INSERT INTO player_punish(banned_id, sender_id, reason, creation_date, expiry_date, type) VALUES (?, ?, ?, ?, ?, 'mute');";
 
         Object[] toSet = new Object[]{
                 id.toString(),
-                Main.get().getUniqueIdSafe(sender),
+                sender,
                 reason,
                 new Timestamp(System.currentTimeMillis()),
                 expiry == -1 ? null : new Timestamp(expiry)
         };
 
-        database.updateAsync(sql,toSet,c -> {AuriBungeeUtil.logError("Callback recieved!");});
-
+        database.updateAsync(sql,toSet, c-> {});
 
     }
 

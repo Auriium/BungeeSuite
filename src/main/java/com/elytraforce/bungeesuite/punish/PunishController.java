@@ -168,20 +168,26 @@ public class PunishController {
     }
 
     public void mutePlayer(CommandSender sender, String targetName, UUID id, long expiry, String reason) {
-        storage.mutePlayer(sender,targetName,id,expiry,reason);
+        storage.mutePlayer(Main.get().getUniqueIdSafe(sender), targetName,id,expiry,reason);
+        AuriBungeeUtil.logError("continuing mute pC");
 
         Timestamp created = new Timestamp(System.currentTimeMillis());
-        Mute mute = new Mute(Integer.parseInt(id.toString()),Main.get().getUniqueId(sender),id,reason,created,expiry == -1 ? null : new Timestamp(expiry));
 
+        AuriBungeeUtil.logError("getting player");
         ProxiedPlayer target = main.getProxy().getPlayer(id);
         String timeFormatted = expiry == -1 ? "Permanent" : TimeFormatUtil.toDetailedDate(expiry, true);
-        if (target != null) {
-            registerMute(id, mute);
-            target.sendMessage(String.format(PluginConfig.get().getPrefix() + ChatColor.RED + "You were muted by %s for %s (%s)", sender.getName(), reason, timeFormatted));
-        }
-        String name = target == null ? targetName : target.getName();
-        // Broadcast full message
-        main.broadcast(ChatColor.RED + String.format(PluginConfig.get().getPrefix() + "%s was muted by %s for %s (%s)", name, sender.getName(), reason, timeFormatted), "elytraforce.helper");
+        //test if this works
+        storage.getActiveMute(id).thenAccept(mute -> {
+            AuriBungeeUtil.logError("created mute");
+            if (target != null) {
+                registerMute(id, mute);
+                target.sendMessage(String.format(PluginConfig.get().getPrefix() + ChatColor.RED + "You were muted by %s for %s (%s)", sender.getName(), reason, timeFormatted));
+                String name = target == null ? targetName : target.getName();
+                main.broadcast(ChatColor.RED + String.format(PluginConfig.get().getPrefix() + "%s was muted by %s for %s (%s)", name, sender.getName(), reason, timeFormatted), "elytraforce.helper");
+            }
+
+        });
+
     }
 
     public void kickPlayer(CommandSender sender, String targetName, UUID id, String reason) {
