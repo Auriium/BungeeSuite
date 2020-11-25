@@ -6,7 +6,7 @@ import com.elytraforce.bungeesuite.antiswear.Filters;
 import com.elytraforce.bungeesuite.command.*;
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
-import com.elytraforce.bungeesuite.elytracore.shitcunpp;
+import com.elytraforce.bungeesuite.elytracore.ElytraSQLStorage;
 import com.elytraforce.bungeesuite.listeners.MOTDListener;
 import com.elytraforce.bungeesuite.listeners.PlayerActivityListener;
 import com.elytraforce.bungeesuite.localChat.ChatSpyListener;
@@ -71,7 +71,7 @@ public class Main extends Plugin {
         DiscordController.get();
 
         if (config.useElytraCoreSupport()) {
-            shitcunpp.get();
+            ElytraSQLStorage.get();
         }
 
         this.filters = new Filters();

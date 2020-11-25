@@ -2,18 +2,18 @@ package com.elytraforce.bungeesuite.elytracore;
 
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.rappu_b.Database;
+import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.util.Objects;
 
-public class shitcunpp {
-    private static shitcunpp instance;
+public class ElytraSQLStorage {
+    private static ElytraSQLStorage instance;
 
     private final Database database;
 
-
-
-    private shitcunpp() {
+    private ElytraSQLStorage() {
+        AuriBungeeUtil.logError("Starting ElytraStorage!");
         database = Database.newDatabase()
                 .withUsername(PluginConfig.get().getECDatabaseUser())
                 .withPassword(PluginConfig.get().getECDatabasePassword())
@@ -28,7 +28,7 @@ public class shitcunpp {
 
         database.queryAsync(sql, new Object[]{player.getUniqueId().toString()}, resultSet -> {
             if (resultSet.next()) {
-
+                //comment of testingness
             } else {
 
             }
@@ -39,6 +39,6 @@ public class shitcunpp {
         database.close();
     }
 
-    public static shitcunpp get() { return Objects.requireNonNullElseGet(instance, () -> instance = new shitcunpp());}
+    public static ElytraSQLStorage get() { return Objects.requireNonNullElseGet(instance, () -> instance = new ElytraSQLStorage());}
     
 }
