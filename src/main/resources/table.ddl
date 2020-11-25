@@ -1,5 +1,15 @@
 
 
+CREATE TABLE IF NOT EXISTS player_info
+  (
+    id          CHAR(36),
+    nickname    VARCHAR(24),
+    donator     BOOLEAN,
+    discord     BOOLEAN,
+    pms         BOOLEAN,
+    PRIMARY KEY (id)
+  );
+
 CREATE TABLE IF NOT EXISTS player_login
   (
      id         CHAR(36),
