@@ -2,13 +2,14 @@ package com.elytraforce.bungeesuite.storage;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.config.PluginConfig;
+import com.elytraforce.bungeesuite.localchat.model.ChatPlayer;
 import com.elytraforce.bungeesuite.model.Ban;
 import com.elytraforce.bungeesuite.model.IpBan;
 import com.elytraforce.bungeesuite.model.Mute;
-import com.elytraforce.bungeesuite.rappu_b.Callback;
-import com.elytraforce.bungeesuite.rappu_b.Database;
+import com.elytraforce.bungeesuite.database.Database;
 import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import com.elytraforce.bungeesuite.util.TimeFormatUtil;
+import com.google.gson.reflect.TypeToken;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ComponentBuilder;
@@ -17,6 +18,7 @@ import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.DateFormat;
@@ -25,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 @SuppressWarnings("unused")
 public class SQLStorage {
@@ -168,6 +169,56 @@ public class SQLStorage {
         database.updateAsync(sql,toSet,c -> {});
     }
 
+    /*tldr make sre to store whatever cumes out of this*/
+    /*get an unstored chatplayer object thing i dont know what the fuck im doing i just want to play rimworld god help me*/
+    public CompletableFuture<ChatPlayer> getOrDefaultPlayer(UUID player) {
+        CompletableFuture<ChatPlayer> future = new CompletableFuture<>();
+
+        if (player == null) { future.complete(null);return future; }
+
+            String sql = "SELECT * FROM `levels_player` ";
+            sql += "WHERE `player_uuid` = ?;";
+
+            AuriBungeeUtil.logError("query no. 1: elytra database");
+            database.queryAsync(sql, new Object[]{player.toString()},resultSet -> {
+                int level;
+                int exp;
+                int money;
+
+                if (resultSet.next()) {
+                    level = resultSet.getInt("level");
+                    exp = resultSet.getInt("experience");
+                    money = resultSet.getInt("money");
+                } else {
+                    level = 0;
+                    exp = 0;
+                    money = 0;
+                }
+
+                String sql2 = "SELECT * FROM `player_info` ";
+                sql2 += "WHERE `id` = ?;";
+
+                AuriBungeeUtil.logError("query no. 2: bungee database");
+                database.queryAsync(sql2, new Object[]{player.toString()},rs -> {
+                    String nick;
+                    boolean pms;
+                    boolean discord;
+                    if (rs.next()) {
+                        nick = rs.getString("nickname");
+                        pms = rs.getBoolean("pms");
+                        discord = rs.getBoolean("discord");
+                    } else {
+                        nick = null;
+                        pms = false;
+                        discord = false;
+                    }
+                    AuriBungeeUtil.logError("completing future!");
+                    future.complete(new ChatPlayer(player,level,exp,money,nick,discord,pms));
+                });
+            });
+        return future;
+    }
+
     public CompletableFuture<UUID> getIDFromUsername(String name) {
         CompletableFuture<UUID> future = new CompletableFuture<>();
 
@@ -182,7 +233,6 @@ public class SQLStorage {
 
         database.queryAsync(sql, new Object[]{name}, resultSet -> {
             if (resultSet.next()) {
-                AuriBungeeUtil.logError("RESULTSET HAS NEXT");
                 try {
                     AuriBungeeUtil.logError(resultSet.getString("id"));
                     future.complete(UUID.fromString(resultSet.getString("id")));
@@ -191,7 +241,6 @@ public class SQLStorage {
                     future.complete(null);
                 }
             } else {
-                AuriBungeeUtil.logError("RESULTSET DOESNT HAVE NEXT");
                 future.complete(null);
             }
         });

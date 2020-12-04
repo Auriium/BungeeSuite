@@ -1,4 +1,4 @@
-package com.elytraforce.bungeesuite.rappu_b;
+package com.elytraforce.bungeesuite.database;
 
 import com.elytraforce.bungeesuite.Main;
 import com.google.common.base.Charsets;
@@ -14,7 +14,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

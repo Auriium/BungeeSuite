@@ -2,6 +2,8 @@ package com.elytraforce.bungeesuite.listeners;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.config.PluginConfig;
+import com.elytraforce.bungeesuite.discord.DiscordController;
+import com.elytraforce.bungeesuite.localchat.ChatController;
 import com.elytraforce.bungeesuite.punish.PunishController;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -35,9 +37,12 @@ public class PlayerActivityListener implements Listener {
                                 "\n\n&cWe are undergoing maintenance!" +
                                 "\nPlease come back in a little while!" +
                                 "\n\n&c&lChat with us at &7discord.elytraforce.com")));
+        		return;
         	}
 
         }
+        ChatController.get().handleEvent(event);
+        DiscordController.get().onPlayerJoin(event);
     }
 
     @EventHandler
@@ -45,13 +50,14 @@ public class PlayerActivityListener implements Listener {
         punishController.handleLogin(event);
     }
 
-	@EventHandler(priority = EventPriority.LOW)
-    public void onChat(ChatEvent event) {
-        punishController.handleChat(event);
-    }
-
     @EventHandler
     public void onDisconnect(PlayerDisconnectEvent event) {
         punishController.handleDC(event);
+        DiscordController.get().onPlayerLeave(event);
+    }
+
+    @EventHandler
+    public void onChatEvent(ChatEvent event) {
+        ChatController.get().onChat(event);
     }
 }

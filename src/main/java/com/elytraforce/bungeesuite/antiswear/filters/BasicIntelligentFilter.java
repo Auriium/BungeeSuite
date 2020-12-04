@@ -1,15 +1,13 @@
 package com.elytraforce.bungeesuite.antiswear.filters;
 
-import java.text.Normalizer;
-import java.util.Iterator;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.regex.Pattern;
-
-import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.antiswear.Filter;
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import org.apache.commons.lang3.StringUtils;
+
+import java.text.Normalizer;
+import java.util.Iterator;
+import java.util.List;
+import java.util.regex.Pattern;
 
 public class BasicIntelligentFilter implements Filter{
 

@@ -8,7 +8,8 @@ import com.elytraforce.bungeesuite.discord.commands.TestCommand;
 import com.elytraforce.bungeesuite.discord.commands.TodoCommand;
 import com.elytraforce.bungeesuite.discord.reactions.AntiswearEditReaction;
 import com.elytraforce.bungeesuite.discord.reactions.AntiswearReaction;
-import com.elytraforce.bungeesuite.listeners.DiscordListener;
+import net.md_5.bungee.api.event.PlayerDisconnectEvent;
+import net.md_5.bungee.api.event.PostLoginEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
@@ -28,6 +29,8 @@ public class DiscordController {
 	public static String token = null; // Bot token
 	public static DiscordApi api = null; // Api Instance
 	private static DiscordController instance;
+	private static TextChannel chan;
+
 
 	public static void incorrectArgProvided(TextChannel chan, int position) {
 		EmbedBuilder builder = new EmbedBuilder()
@@ -98,7 +101,7 @@ public class DiscordController {
 
         Main.get().getProxy().getScheduler().schedule(Main.get(), () -> api.updateActivity(ActivityType.PLAYING, "ElytraForce | " + Main.get().getProxy().getOnlineCount() + " are online!"), 0L, 20L, TimeUnit.SECONDS);
 
-		Main.get().getProxy().getPluginManager().registerListener(Main.get(), new DiscordListener(Main.get(), config.getDiscordChannelID()));
+		chan = api.getTextChannelById(config.getDiscordChannelID()).get();
 	}
 	
 	public static String getBotOwner(MessageCreateEvent event) {
@@ -118,10 +121,38 @@ public class DiscordController {
 		embed.setFooter("AuriDiscord | " + Main.get().getDescription().getVersion().toString());
 	}
 
+	public void onPlayerJoin(PostLoginEvent event) {
+
+		if (PluginConfig.get().getMaintenance()) {
+			if (!event.getPlayer().hasPermission("elytraforce.helper")) { return; }
+		}
+
+		EmbedBuilder builder = new EmbedBuilder()
+				.setColor(Color.CYAN)
+				.setDescription("**" + event.getPlayer().getName() + "**" + " joined the ElytraForce Network");
+		DiscordController.getChan().sendMessage(builder);
+	}
+
+	public void onPlayerLeave(PlayerDisconnectEvent event) {
+
+		if (PluginConfig.get().getMaintenance()) {
+			if (!event.getPlayer().hasPermission("elytraforce.helper")) { return; }
+		}
+
+		EmbedBuilder builder = new EmbedBuilder()
+				.setColor(Color.CYAN)
+				.setDescription("**" + event.getPlayer().getName() + "**" + " left the ElytraForce Network");
+		DiscordController.getChan().sendMessage(builder);
+	}
+
 	public static DiscordController get() {
 		return Objects.requireNonNullElseGet(instance, () -> instance = new DiscordController());
 	}
-	
-	
+
+	public static TextChannel getChan() {
+		return chan;
+	}
+
+
 	
 }

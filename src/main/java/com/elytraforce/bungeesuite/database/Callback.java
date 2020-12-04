@@ -1,4 +1,4 @@
-package com.elytraforce.bungeesuite.rappu_b;
+package com.elytraforce.bungeesuite.database;
 
 import java.sql.SQLException;
 

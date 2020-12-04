@@ -1,5 +1,5 @@
 database:
-  database: "shitbitch"
+  database: "players"
   user: "owners"
   pass: "DX$;xFeuZ7YAyre`"
   port: 3306

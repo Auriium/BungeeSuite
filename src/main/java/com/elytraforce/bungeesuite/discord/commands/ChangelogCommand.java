@@ -1,10 +1,8 @@
 package com.elytraforce.bungeesuite.discord.commands;
 
-import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
 import com.vdurmont.emoji.EmojiParser;
-import org.apache.commons.lang3.ArrayUtils;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.event.message.MessageCreateEvent;
 

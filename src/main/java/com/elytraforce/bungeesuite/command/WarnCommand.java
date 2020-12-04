@@ -2,7 +2,6 @@ package com.elytraforce.bungeesuite.command;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.punish.PunishController;
-import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;

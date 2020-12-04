@@ -1,14 +1,14 @@
 package com.elytraforce.bungeesuite.config;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
 import com.elytraforce.bungeesuite.Main;
-
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 @SuppressWarnings("unused")
 public class PluginConfig {
 

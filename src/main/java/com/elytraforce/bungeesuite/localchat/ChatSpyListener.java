@@ -1,6 +1,5 @@
-package com.elytraforce.bungeesuite.localChat;
+package com.elytraforce.bungeesuite.localchat;
 
-import java.util.HashMap;
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import net.md_5.bungee.api.ChatColor;
@@ -10,6 +9,9 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
 
+import java.util.HashMap;
+
+//TODO: add this to chatcontroller
 public class ChatSpyListener implements Listener{
 	private HashMap<ProxiedPlayer, Boolean> spyMap;
 	private Main instance;

@@ -1,19 +1,20 @@
 package com.elytraforce.bungeesuite.announce;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-
 import com.elytraforce.bungeesuite.Main;
-
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.Title;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 
 public class AnnounceController {

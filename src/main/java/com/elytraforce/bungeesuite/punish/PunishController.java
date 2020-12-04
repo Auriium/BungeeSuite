@@ -82,9 +82,7 @@ public class PunishController {
         UUID who = event.getConnection().getUniqueId();
         event.registerIntent(Main.get());
         try {
-            AuriBungeeUtil.logError("Attempting to check if the player is banned!");
             storage.getActiveBan(who).thenAccept(ban -> {
-                AuriBungeeUtil.logError("(Complete) BanCompleted");
                 if (ban != null) {
                     event.setCancelled(true);
                     String expiry = ban.getExpiry() == null ? "Permanent" : TimeFormatUtil.toDetailedDate(ban.getExpiry().getTime());
@@ -94,9 +92,7 @@ public class PunishController {
                                     "\nExpires: &7%s" +
                                     "\n\n&c&lAppeal at &7elytraforce.com", ban.getReason(), expiry)));
                 } else {
-                    AuriBungeeUtil.logError("Attempting to check if the player has banned alts!");
                     storage.getBannedAlts(who).thenAccept(list -> {
-                        AuriBungeeUtil.logError("(Complete) AltsCompleted");
                         if (!list.isEmpty()) {
                             if (list.size() > 5) {
                                 String formatted = list.stream().limit(3).collect(Collectors.joining("\n&c"));
@@ -113,12 +109,9 @@ public class PunishController {
                         }
                     });
 
-                    AuriBungeeUtil.logError("Attempting to track the login!");
                     storage.trackLogin(event.getConnection());
 
-                    AuriBungeeUtil.logError("Attempting to track the mute and accept it!");
                     storage.getActiveMute(who).thenAccept(mute -> {
-                        AuriBungeeUtil.logError("(Complete) MuteCompleted");
                         if (mute != null) {
                             registerMute(who, mute);
                         }
