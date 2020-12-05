@@ -1,7 +1,8 @@
-package com.elytraforce.bungeesuite.command;
+package com.elytraforce.bungeesuite.command.chat;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.announce.AnnounceController;
+import com.elytraforce.bungeesuite.command.BungeeCommand;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;

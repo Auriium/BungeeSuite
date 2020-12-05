@@ -1,6 +1,7 @@
-package com.elytraforce.bungeesuite.command;
+package com.elytraforce.bungeesuite.command.punish;
 
 import com.elytraforce.bungeesuite.Main;
+import com.elytraforce.bungeesuite.command.PunishCommand;
 import com.elytraforce.bungeesuite.model.Mute;
 import net.md_5.bungee.api.CommandSender;
 

@@ -3,3 +3,5 @@ main: com.elytraforce.bungeesuite.Main
 author: Aurium_
 version: ${project.version}
 description: ${project.description}
+
+softDepends: ['BungeeTabListPlus']

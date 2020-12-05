@@ -34,7 +34,7 @@ public class ChatPlayer {
 
     /*not offline safe*/
     public ProxiedPlayer asProxiedPlayer() {
-        if (Main.get().getProxy().getPlayer(uniqueId) != null) {
+        if (isOnline()) {
             return Main.get().getProxy().getPlayer(uniqueId);
         } else {
             return null;
@@ -56,7 +56,7 @@ public class ChatPlayer {
     public User getOnlinePermissions() { return this.permissionsUser; }
 
     public boolean isOnlineDonator() {
-        return Main.get().getProxy().getPlayer(uniqueId).hasPermission("elytraforce.donator");
+        return asProxiedPlayer().hasPermission("elytraforce.donator");
     }
 
     public CompletableFuture<Boolean> isOfflineDonator() {
@@ -68,7 +68,7 @@ public class ChatPlayer {
 
     public String getOnlineGroupName() {
         CachedMetaData metaData = permissionsUser.getCachedData().getMetaData();
-        return metaData.getPrefix();
+        return Objects.requireNonNullElse(metaData.getPrefix(), "");
     }
 
     public void setPmReciever(ChatPlayer rec) {this.messageReceiver = rec; }
@@ -79,12 +79,19 @@ public class ChatPlayer {
     /*not offline safe*/
     public String getNickname() {
         if (nickname == null) {
-            return Main.get().getProxy().getPlayer(uniqueId).getDisplayName();
+            return asProxiedPlayer().getDisplayName();
         } else {
             return AuriBungeeUtil.colorString("&7~" + nickname);
 
         }
     }
+
+    /*not offline safe*/
+    public String getName() {
+        return asProxiedPlayer().getDisplayName();
+    }
+
+    public String getServerName() { return asProxiedPlayer().getServer().getInfo().getName(); }
 
     //DO NOT USE
     public String getNicknameInternal() {

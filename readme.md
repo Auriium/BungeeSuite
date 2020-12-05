@@ -13,3 +13,11 @@ A bungeecord side administration suite synced with MySQL
 - Improve antiswear
 - Reports
 - Update discord bot framework to latest
+
+# Hard Depends
+- Redis
+- ElytraCore
+- LuckPerms
+
+# Soft Depends
+- BungeeTabListPlus

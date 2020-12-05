@@ -1,11 +1,18 @@
 package com.elytraforce.bungeesuite;
 
+import codecrafter47.bungeetablistplus.api.bungee.BungeeTabListPlusAPI;
 import com.elytraforce.bungeesuite.announce.AnnounceController;
 import com.elytraforce.bungeesuite.announce.RestartController;
 import com.elytraforce.bungeesuite.antiswear.Filters;
 import com.elytraforce.bungeesuite.command.*;
+import com.elytraforce.bungeesuite.command.chat.*;
+import com.elytraforce.bungeesuite.command.punish.BanCommand;
+import com.elytraforce.bungeesuite.command.punish.KickCommand;
+import com.elytraforce.bungeesuite.command.punish.MuteCommand;
+import com.elytraforce.bungeesuite.command.punish.WarnCommand;
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
+import com.elytraforce.bungeesuite.hook.TabListVar;
 import com.elytraforce.bungeesuite.listeners.MOTDListener;
 import com.elytraforce.bungeesuite.listeners.PlayerActivityListener;
 import com.elytraforce.bungeesuite.localchat.ChatController;
@@ -64,6 +71,16 @@ public class Main extends Plugin {
 
         getProxy().getPluginManager().registerCommand(this, new NickCommand(this,"nick"));
         getProxy().getPluginManager().registerCommand(this, new NickCommand(this,"nickname"));
+        getProxy().getPluginManager().registerCommand(this, new MCCommand(this, "mc"));
+        getProxy().getPluginManager().registerCommand(this, new MCCommand(this, "sc"));
+        getProxy().getPluginManager().registerCommand(this, new ACCommand(this, "ac"));
+        getProxy().getPluginManager().registerCommand(this, new GCCommand(this, "g"));
+        getProxy().getPluginManager().registerCommand(this, new GCCommand(this, "global"));
+
+        getProxy().getPluginManager().registerCommand(this, new PMCommand(this, "msg"));
+        getProxy().getPluginManager().registerCommand(this, new PMCommand(this, "pm"));
+        getProxy().getPluginManager().registerCommand(this, new ReplyCommand(this, "r"));
+        getProxy().getPluginManager().registerCommand(this, new ReplyCommand(this, "reply"));
 
         getProxy().getPluginManager().registerListener(this, new PlayerActivityListener(this));
         getProxy().getPluginManager().registerListener(this, new MOTDListener(this));
@@ -76,6 +93,11 @@ public class Main extends Plugin {
 
         this.filters = new Filters();
 
+    }
+
+    @Override
+    public void onLoad() {
+            BungeeTabListPlusAPI.registerVariable(this, new TabListVar());
     }
 
     public void broadcast(String message, String permission) {

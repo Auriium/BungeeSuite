@@ -1,6 +1,7 @@
 package com.elytraforce.bungeesuite.localchat;
 
 import com.elytraforce.bungeesuite.Main;
+import com.elytraforce.bungeesuite.antiswear.Filters;
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
 import com.elytraforce.bungeesuite.localchat.model.ChatMode;
@@ -9,7 +10,6 @@ import com.elytraforce.bungeesuite.localchat.model.Delta;
 import com.elytraforce.bungeesuite.punish.PunishController;
 import com.elytraforce.bungeesuite.storage.SQLStorage;
 import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -18,8 +18,6 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
-import net.md_5.bungee.chat.ComponentSerializer;
-import org.apache.commons.lang3.ArrayUtils;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -30,14 +28,13 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class ChatController {
     private ArrayList<ChatPlayer> players;
     private static ChatController instance;
     private JedisPool pool;
+    private Filters filters;
 
     private static final String BUNGEE_CHANNEL = "channel_bungee";
 
@@ -69,6 +66,8 @@ public class ChatController {
 
 
         this.players = new ArrayList<>();
+
+        filters = Main.get().getFilters();
     }
 
     public void handleLogin(PostLoginEvent event) {
@@ -80,16 +79,20 @@ public class ChatController {
 
     public void handleDC(PlayerDisconnectEvent event) {
         ChatPlayer player = getPlayer(event.getPlayer());
-        player.update();
-        players.remove(player);
+        if (player != null) {
+            player.update();
+            players.remove(player);
+
+        }
     }
 
     //highest priority
     public void onChat(ChatEvent event) {
         PunishController.get().handleChat(event);
-        Main.get().getFilters().handleEvent(event);
-
         if (event.isCommand()) { return; }
+
+        filters.handleEvent(event);
+
         if (!event.isCancelled()) {
             event.setCancelled(true);
 
@@ -102,45 +105,164 @@ public class ChatController {
                 //TODO: replace this with something cleaner
                 switch(mode) {
                     case NORMAL:
-                        for (ProxiedPlayer player1 : ((ProxiedPlayer) event.getSender()).getServer().getInfo().getPlayers()) {
-                            player1.sendMessage(formatNormal(event.getMessage(),player).create());
-                        }
+                        sendNormal(event.getMessage(),player);
                         break;
                     case MOD:
+                        sendStaff(event.getMessage(),player);
                         break;
                     case ADMIN:
+                        sendAdmin(event.getMessage(),player);
                         break;
                     case GLOBAL:
-                        break;
-                    case PM:
-                        if (player.getPmReciever() == null) { player.setChatMode(ChatMode.NORMAL); return; }
+                        sendGlobal(event.getMessage(),player);
                         break;
                 }
             }
         }
     }
 
-    public ComponentBuilder formatNormal(String message, ChatPlayer player) {
-        BaseComponent[] first;
-        BaseComponent[] second;
+    public void sendNormal(String message, ChatPlayer player) {
+        player.asProxiedPlayer().getServer().getInfo().getPlayers().stream()
+                .forEach(player1 -> {
+                    player1.sendMessage(formatNormal(message,player).create());
+                });
+                if (player.getSendDiscord()) { this.callDiscord(player.asProxiedPlayer(),message); }
+    }
+
+    private ComponentBuilder formatNormal(String message, ChatPlayer player) {
+
+        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(player.getLevel() + " &7| " + player.getOnlineGroupName()));
+        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&r" + player.getNickname() + " &r&f»&f "));
         BaseComponent[] third;
+
         if (player.isOnlineDonator()) {
-            first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(player.getLevel() + " &7| " + player.getOnlineGroupName()));
-            second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&r" + player.getNickname() + " &r&f»&f "));
             third = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
                     .trim().replaceAll(" +", " ")));
         } else {
-            first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(player.getLevel() + " &7| " + player.getOnlineGroupName()));
-            second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&r" + player.getNickname() + " &r&f»&f "));
             third = TextComponent.fromLegacyText(message
                     .trim().replaceAll(" +", " "));
         }
 
-        BaseComponent[] hover = TextComponent.fromLegacyText("CUM GOD CUM GOD CUM GOD \n CUM GOD LINE 2");
-        BaseComponent[] hover1 = TextComponent.fromLegacyText("");
+        BaseComponent[] hover = TextComponent.fromLegacyText( AuriBungeeUtil.colorString(
+                player.getOnlineGroupName() + "&r" )
+        );
 
-        return new ComponentBuilder("").append(first).event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,hover)).bold(false).append(second).append(third).event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,hover1));
+        BaseComponent[] hover1 = TextComponent.fromLegacyText( AuriBungeeUtil.colorString(
+                "&7(" + player.getName() + "&7)\n \n"
+                        + "&7Level: &b" + player.getLevel() + "\n"
+                        + "&7Balance: &e" + player.getMoney() + "⛃\n\n"
+                        + "&7Currently playing on &7(&f" + player.getServerName() + "&7)" )
+        );
+        return new ComponentBuilder("").append(first).event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new ComponentBuilder("").append(hover).bold(false).append(hover1).create())).bold(false).append(second).append(third).event((HoverEvent) null);
     }
+
+    public void sendStaff(String message, ChatPlayer player) {
+        Main.get().getProxy().getPlayers().stream()
+                .filter(p -> p.hasPermission("elytraforce.mod"))
+                .forEach(player1 -> {
+                    player1.sendMessage(formatStaff(message,player).create());
+                });
+    }
+
+    private ComponentBuilder formatStaff(String message, ChatPlayer player) {
+        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&b&lSTAFF"));
+        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(" &7>> &r" + player.getOnlineGroupName() + "&r" + player.getNickname() + "&r&f:&f "));
+        BaseComponent[] third = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
+                .trim().replaceAll(" +", " ")));
+
+        return new ComponentBuilder("").append(first).bold(false).append(second).append(third);
+    }
+
+    public void sendAdmin(String message, ChatPlayer player) {
+        Main.get().getProxy().getPlayers().stream()
+                .filter(p -> p.hasPermission("elytraforce.admin"))
+                .forEach(player1 -> {
+                    player1.sendMessage(formatAdmin(message,player).create());
+                });
+    }
+
+    private ComponentBuilder formatAdmin(String message, ChatPlayer player) {
+        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&4&lADMIN"));
+        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(" &7>> &r" + player.getOnlineGroupName() + "&r" + player.getNickname() + "&r&f:&f "));
+        BaseComponent[] third = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
+                .trim().replaceAll(" +", " ")));
+
+        return new ComponentBuilder("").append(first).bold(false).append(second).append(third);
+    }
+
+    public void sendGlobal(String message, ChatPlayer player) {
+        if (filters.handleString(message)) {
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + AuriBungeeUtil.colorString("&cPlease do not swear on ElytraForce!"));
+            return;
+        }
+
+        Main.get().getProxy().getPlayers().stream()
+                .forEach(player1 -> {
+                    player1.sendMessage(formatGlobal(message,player).create());
+                }); if (player.getSendDiscord()) { this.callDiscord(player.asProxiedPlayer(),message); }
+    }
+
+    private ComponentBuilder formatGlobal(String message, ChatPlayer player) {
+        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&9&lGLOBAL"));
+        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(" &7>> &r" + player.getOnlineGroupName() + "&r" + player.getNickname() + "&r&f:&f "));
+        BaseComponent[] third = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
+                .trim().replaceAll(" +", " ")));
+
+        return new ComponentBuilder("").append(first).bold(false).append(second).append(third);
+    }
+
+    public void sendReply(String message, ChatPlayer player) {
+        try {
+            player.getPmReciever().getName();
+        } catch (NullPointerException exception) {
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + AuriBungeeUtil.colorString("&cYour target is invalid or offline!"));
+            player.setPmReciever(null);
+            return;
+        }
+
+        if (filters.handleString(message)) {
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + AuriBungeeUtil.colorString("&cPlease do not swear on ElytraForce!"));
+            return;
+        }
+
+        player.getPmReciever().asProxiedPlayer().sendMessage(formatPMIn(message,player.getPmReciever(),player).create());
+        player.asProxiedPlayer().sendMessage(formatPMOut(message,player,player.getPmReciever()).create());
+    }
+
+    public void sendPM(String message, ChatPlayer player, ChatPlayer target) {
+        try {
+            target.getName();
+        } catch (NullPointerException exception) {
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + AuriBungeeUtil.colorString("&cYour target is invalid or offline!"));
+            player.setPmReciever(null);
+            return;
+        }
+
+        if (filters.handleString(message)) {
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + AuriBungeeUtil.colorString("&cPlease do not swear on ElytraForce!"));
+            return;
+        }
+
+        player.getPmReciever().asProxiedPlayer().sendMessage(formatPMIn(message,target,player).create());
+        player.asProxiedPlayer().sendMessage(formatPMOut(message,player,target).create());
+    }
+
+    private ComponentBuilder formatPMOut(String message, ChatPlayer player, ChatPlayer target) {
+        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&7You &7-> &e" + target.getName() + " &r"));
+        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
+                .trim().replaceAll(" +", " ")));
+
+        return new ComponentBuilder("").append(first).bold(false).append(second);
+    }
+
+    private ComponentBuilder formatPMIn(String message, ChatPlayer player, ChatPlayer target) {
+        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&e" + target.getName() + " &7-> &7You" + " &r"));
+        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
+                .trim().replaceAll(" +", " ")));
+
+        return new ComponentBuilder("").append(first).bold(false).append(second);
+    }
+
 
     public void callDiscord(ProxiedPlayer player, String message) {
         String msg = message.replaceAll("@everyone", "*snip*").replaceAll("@here", "*snip*");

@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS player_info
     discord_out    BOOLEAN,
     pms         BOOLEAN,
     chat_color  VARCHAR(24),
+    safe_chat   BOOLEAN,
     PRIMARY KEY (id)
   );
 
