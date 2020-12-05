@@ -4,8 +4,10 @@ CREATE TABLE IF NOT EXISTS player_info
   (
     id          CHAR(36),
     nickname    VARCHAR(24),
-    discord     BOOLEAN,
+    discord_in     BOOLEAN,
+    discord_out    BOOLEAN,
     pms         BOOLEAN,
+    chat_color  VARCHAR(24),
     PRIMARY KEY (id)
   );
 

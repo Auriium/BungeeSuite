@@ -8,6 +8,7 @@ import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
 import com.elytraforce.bungeesuite.listeners.MOTDListener;
 import com.elytraforce.bungeesuite.listeners.PlayerActivityListener;
+import com.elytraforce.bungeesuite.localchat.ChatController;
 import com.elytraforce.bungeesuite.localchat.ChatSpyListener;
 import com.elytraforce.bungeesuite.punish.PunishController;
 import com.elytraforce.bungeesuite.storage.SQLStorage;
@@ -34,6 +35,7 @@ public class Main extends Plugin {
     @Override
     public void onDisable() {
         SQLStorage.get().shutdown();
+        ChatController.get().shutdown();
     }
 
     @Override
@@ -59,6 +61,9 @@ public class Main extends Plugin {
         getProxy().getPluginManager().registerCommand(this, new MaintenanceCommand(this));
         getProxy().getPluginManager().registerCommand(this, new AnnounceCommand(this));
         getProxy().getPluginManager().registerCommand(this, new KickCommand(this));
+
+        getProxy().getPluginManager().registerCommand(this, new NickCommand(this,"nick"));
+        getProxy().getPluginManager().registerCommand(this, new NickCommand(this,"nickname"));
 
         getProxy().getPluginManager().registerListener(this, new PlayerActivityListener(this));
         getProxy().getPluginManager().registerListener(this, new MOTDListener(this));

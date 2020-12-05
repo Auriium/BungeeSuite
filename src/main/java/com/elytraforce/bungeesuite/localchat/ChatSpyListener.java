@@ -35,11 +35,6 @@ public class ChatSpyListener implements Listener{
 		return spyMap.getOrDefault(player, false);
 	}
 	
-	@EventHandler(priority = EventPriority.NORMAL)
-	public void onSwear(ChatEvent event) {
-		Main.get().getFilters().handleEvent(event);
-	}
-	
 	@SuppressWarnings("deprecation")
 	@EventHandler(priority = EventPriority.HIGH) //must be higher than antiswear priority.
 	public void onPlayerChat(ChatEvent event) {

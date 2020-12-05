@@ -13,7 +13,6 @@ import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
-import net.md_5.bungee.event.EventPriority;
 
 public class PlayerActivityListener implements Listener {
 
@@ -41,7 +40,7 @@ public class PlayerActivityListener implements Listener {
         	}
 
         }
-        ChatController.get().handleEvent(event);
+        ChatController.get().handleLogin(event);
         DiscordController.get().onPlayerJoin(event);
     }
 
@@ -54,6 +53,7 @@ public class PlayerActivityListener implements Listener {
     public void onDisconnect(PlayerDisconnectEvent event) {
         punishController.handleDC(event);
         DiscordController.get().onPlayerLeave(event);
+        ChatController.get().handleDC(event);
     }
 
     @EventHandler

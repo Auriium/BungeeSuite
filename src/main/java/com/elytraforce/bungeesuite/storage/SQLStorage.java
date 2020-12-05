@@ -55,6 +55,50 @@ public class SQLStorage {
         database.close();
     }
 
+    public CompletableFuture<Integer> insertPlayer(ChatPlayer player) {
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+
+            String sql = "INSERT INTO player_info(id, nickname, discord_in, discord_out, pms, chat_color) VALUES (?, ?, ?, ?, ?, ?);";
+
+            Object[] toSet = new Object[]{
+                    player.getUUID().toString(),
+                    player.getNicknameInternal(),
+                    player.getRecieveDiscord(),
+                    player.getSendDiscord(),
+                    player.getPmsEnabled(),
+                    player.getChatColor().name()
+            };
+
+            database.updateAsync(sql,toSet, s -> {
+                player.setInDatabase(true);
+                future.complete(s);
+                }
+            );
+
+        return future;
+    }
+
+    public CompletableFuture<Integer> updatePlayer(ChatPlayer player) {
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+
+
+        String sql = "UPDATE player_info SET nickname = ?, discord_in = ?, discord_out = ?, pms = ?, chat_color = ? WHERE id = ?;";
+
+        Object[] toSet = new Object[]{
+
+                player.getNicknameInternal(),
+                player.getRecieveDiscord(),
+                player.getSendDiscord(),
+                player.getPmsEnabled(),
+                player.getChatColor().name(),
+                player.getUUID().toString()
+        };
+
+        database.updateAsync(sql,toSet,future::complete);
+
+        return future;
+    }
+
     public CompletableFuture<Integer> trackLogin(PendingConnection connection) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
 
@@ -202,18 +246,28 @@ public class SQLStorage {
                 database.queryAsync(sql2, new Object[]{player.toString()},rs -> {
                     String nick;
                     boolean pms;
-                    boolean discord;
+                    boolean discord_out;
+                    boolean discord_in;
+                    ChatColor color;
+                    boolean inDatabase;
                     if (rs.next()) {
                         nick = rs.getString("nickname");
                         pms = rs.getBoolean("pms");
-                        discord = rs.getBoolean("discord");
+                        discord_out = rs.getBoolean("discord_out");
+                        discord_in = rs.getBoolean("discord_in");
+                        color = ChatColor.valueOf(rs.getString("chat_color"));
+                        inDatabase = true;
                     } else {
                         nick = null;
-                        pms = false;
-                        discord = false;
+                        pms = true;
+                        discord_in = true;
+                        discord_out = true;
+                        inDatabase = false;
+                        color = ChatColor.WHITE;
                     }
                     AuriBungeeUtil.logError("completing future!");
-                    future.complete(new ChatPlayer(player,level,exp,money,nick,discord,pms));
+                    //inDatabase corresponds to whether the player is in bungeeDatabase not levelsDatabase
+                    future.complete(new ChatPlayer(player,level,exp,money,nick,discord_in,discord_out,pms,inDatabase,color));
                 });
             });
         return future;
