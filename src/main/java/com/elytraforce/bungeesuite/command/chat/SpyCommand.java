@@ -1,11 +1,13 @@
-package com.elytraforce.bungeesuite.command;
+package com.elytraforce.bungeesuite.command.chat;
 
 import com.elytraforce.bungeesuite.Main;
+import com.elytraforce.bungeesuite.command.BungeeCommand;
+import com.elytraforce.bungeesuite.localchat.ChatController;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
-public class SpyCommand extends BungeeCommand{
+public class SpyCommand extends BungeeCommand {
 
 	public SpyCommand(Main plugin) {
 		super(plugin, "cspy", "elytraforce.mod");
@@ -23,12 +25,12 @@ public class SpyCommand extends BungeeCommand{
         
         ProxiedPlayer player = (ProxiedPlayer) sender;
         
-        if (getPlugin().getChatSpy().getIsSpying(player)) {
-        	getPlugin().getChatSpy().disableSpy(player);
+        if (ChatController.get().getIsSpying(player)) {
+			ChatController.get().disableSpy(player);
         	sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Chat Spy Disabled!");
         	
         } else {
-        	getPlugin().getChatSpy().enableSpy(player);
+			ChatController.get().enableSpy(player);
         	sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Chat Spy Enabled!");
         }
 

@@ -7,12 +7,12 @@ import com.elytraforce.bungeesuite.discord.DiscordController;
 import com.elytraforce.bungeesuite.localchat.model.ChatMode;
 import com.elytraforce.bungeesuite.localchat.model.ChatPlayer;
 import com.elytraforce.bungeesuite.localchat.model.Delta;
+import com.elytraforce.bungeesuite.localchat.model.PlayerDelta;
 import com.elytraforce.bungeesuite.punish.PunishController;
 import com.elytraforce.bungeesuite.storage.SQLStorage;
 import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.*;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
@@ -26,6 +26,7 @@ import redis.clients.jedis.JedisPubSub;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +37,21 @@ public class ChatController {
     private JedisPool pool;
     private Filters filters;
 
+    private HashMap<ProxiedPlayer, Boolean> spyMap;
+    public boolean getIsSpying(ProxiedPlayer player) {
+        return spyMap.getOrDefault(player, false);
+    }
+
+    public void enableSpy(ProxiedPlayer player) {
+        spyMap.put(player, true);
+    }
+
+    public void disableSpy(ProxiedPlayer player) {
+        spyMap.put(player, false);
+    }
+
     private static final String BUNGEE_CHANNEL = "channel_bungee";
+    private static final String GUI_CHANNEL = "channel_gui_i";
 
     private ChatController() {
         String password = PluginConfig.get().getRedisPassword();
@@ -51,6 +66,7 @@ public class ChatController {
         Main.get().getProxy().getScheduler().runAsync(Main.get(), () -> {
             try (Jedis jedis = pool.getResource()){
                 jedis.subscribe(new BungeeReciever(),BUNGEE_CHANNEL);
+                jedis.subscribe(new GUIReciever(),GUI_CHANNEL);
             } catch (Exception e) {
                 AuriBungeeUtil.logError("Error connecting to redis - " + e.getMessage());
                 AuriBungeeUtil.logError("Broken redis pool");
@@ -68,6 +84,35 @@ public class ChatController {
         this.players = new ArrayList<>();
 
         filters = Main.get().getFilters();
+        this.spyMap = new HashMap<>();
+    }
+
+    public void handleSpy(ChatEvent event) {
+        if (event.isCommand()) {
+            if (event.getMessage().startsWith("/mc") || event.getMessage().startsWith("/ac")) { return; }
+        }
+
+        ProxiedPlayer sender = (ProxiedPlayer) event.getSender();
+
+        for (ProxiedPlayer player : Main.get().getProxy().getPlayers()) {
+
+            if (sender.equals(player)) { continue; }
+
+            if (getIsSpying(player)) {
+                if (sender.hasPermission("elytraforce.admin")) {
+                    if (player.hasPermission("elytraforce.owner")) {
+                        player.sendMessage(PluginConfig.get().getPrefix() + ChatColor.translateAlternateColorCodes(
+                                '&', "&7(" + sender.getServer().getInfo().getName() + "&7) &b" + sender.getName() + "&f: &7" + event.getMessage()));
+                    } else {
+                        return;
+                    }
+                } else {
+                    player.sendMessage(PluginConfig.get().getPrefix() + ChatColor.translateAlternateColorCodes(
+                            '&', "&7(" + sender.getServer().getInfo().getName() + "&7) &b" + sender.getName() + "&f: &7" + event.getMessage()));
+                }
+
+            }
+        }
     }
 
     public void handleLogin(PostLoginEvent event) {
@@ -89,6 +134,8 @@ public class ChatController {
     //highest priority
     public void onChat(ChatEvent event) {
         PunishController.get().handleChat(event);
+        handleSpy(event);
+
         if (event.isCommand()) { return; }
 
         filters.handleEvent(event);
@@ -122,7 +169,7 @@ public class ChatController {
     }
 
     public void sendNormal(String message, ChatPlayer player) {
-        player.asProxiedPlayer().getServer().getInfo().getPlayers().stream()
+        player.asProxiedPlayer().getServer().getInfo().getPlayers()
                 .forEach(player1 -> {
                     player1.sendMessage(formatNormal(message,player).create());
                 });
@@ -148,12 +195,13 @@ public class ChatController {
         );
 
         BaseComponent[] hover1 = TextComponent.fromLegacyText( AuriBungeeUtil.colorString(
-                "&7(" + player.getName() + "&7)\n \n"
+                "&7" + player.getName() + "&7\n \n"
                         + "&7Level: &b" + player.getLevel() + "\n"
                         + "&7Balance: &e" + player.getMoney() + "⛃\n\n"
                         + "&7Currently playing on &7(&f" + player.getServerName() + "&7)" )
         );
-        return new ComponentBuilder("").append(first).event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new ComponentBuilder("").append(hover).bold(false).append(hover1).create())).bold(false).append(second).append(third).event((HoverEvent) null);
+
+        return new ComponentBuilder("").append(first).event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new ComponentBuilder("").append(hover).bold(false).append(hover1).create())).event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,player.getName())).bold(false).append(second).append(third).event((HoverEvent) null);
     }
 
     public void sendStaff(String message, ChatPlayer player) {
@@ -170,7 +218,7 @@ public class ChatController {
         BaseComponent[] third = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
                 .trim().replaceAll(" +", " ")));
 
-        return new ComponentBuilder("").append(first).bold(false).append(second).append(third);
+        return new ComponentBuilder("").append(first).append(second).bold(false).append(third);
     }
 
     public void sendAdmin(String message, ChatPlayer player) {
@@ -187,7 +235,7 @@ public class ChatController {
         BaseComponent[] third = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
                 .trim().replaceAll(" +", " ")));
 
-        return new ComponentBuilder("").append(first).bold(false).append(second).append(third);
+        return new ComponentBuilder("").append(first).append(second).bold(false).append(third);
     }
 
     public void sendGlobal(String message, ChatPlayer player) {
@@ -208,7 +256,7 @@ public class ChatController {
         BaseComponent[] third = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
                 .trim().replaceAll(" +", " ")));
 
-        return new ComponentBuilder("").append(first).bold(false).append(second).append(third);
+        return new ComponentBuilder("").append(first).append(second).bold(false).append(third);
     }
 
     public void sendReply(String message, ChatPlayer player) {
@@ -284,6 +332,19 @@ public class ChatController {
         return new Delta(id,amount,change,value);
     }
 
+    public PlayerDelta decryptPlayerDelta(String string) {
+        String[] parts = string.split(":");
+        UUID id = UUID.fromString(parts[0]);
+        String action = parts[1];
+        PlayerDelta.TargetEnum change = PlayerDelta.TargetEnum.valueOf(parts[2]);
+        return new PlayerDelta(id,action,change);
+    }
+
+    public String encryptPlayerDelta(PlayerDelta playerDelta) {
+        String adapt = playerDelta.getTarget().toString() + ":" + playerDelta.getAction() + ":" + playerDelta.getType().name();
+        return adapt;
+    }
+
     public ChatPlayer getPlayer(UUID uuid) {
         for (ChatPlayer p : this.players) {
             if (p.getUUID().equals(uuid)) {
@@ -301,12 +362,22 @@ public class ChatController {
         @Override
         public void onMessage(String channel, final String msg) {
             //decrypt delta
-            AuriBungeeUtil.logError("recieved message with delta: " + msg);
             Delta delta = decryptDelta(msg);
+            if (getPlayer(delta.getTarget()) != null) {
+                getPlayer(delta.getTarget()).adjust(delta);
+            }
+        }
+    }
+
+    public class GUIReciever extends JedisPubSub {
+        @Override
+        public void onMessage(String channel, final String msg) {
+            //decrypt delta
+            AuriBungeeUtil.logError("recieved PDELTA message with delta: " + msg);
+            PlayerDelta delta = decryptPlayerDelta(msg);
             AuriBungeeUtil.logError(delta.getTarget().toString());
             if (getPlayer(delta.getTarget()) != null) {
-                AuriBungeeUtil.logError("target not null");
-                getPlayer(delta.getTarget()).adjust(delta);
+                getPlayer(delta.getTarget()).adjustP(delta);
             }
         }
     }

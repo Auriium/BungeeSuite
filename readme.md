@@ -18,6 +18,7 @@ A bungeecord side administration suite synced with MySQL
 - Redis
 - ElytraCore
 - LuckPerms
+- Protocolize
 
 # Soft Depends
 - BungeeTabListPlus

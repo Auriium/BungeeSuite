@@ -90,6 +90,10 @@
             <id>codecrafter47-repo</id>
             <url>http://nexus.codecrafter47.de/content/repositories/public/</url>
         </repository>
+        <repository>
+            <id>exceptionflug</id>
+            <url>https://mvn.exceptionflug.de/repository/exceptionflug-public/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -116,12 +120,6 @@
     		<groupId>com.vdurmont</groupId>
     		<artifactId>emoji-java</artifactId>
     		<version>4.0.0</version>
-		</dependency>
-		<dependency>
-  			<groupId>de.exceptionflug</groupId>
-  			<artifactId>protocolize-api</artifactId>
-  			<version>1.6.6-SNAPSHOT</version>
-  			<scope>provided</scope>
 		</dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -150,6 +148,24 @@
             <groupId>codecrafter47.bungeetablistplus</groupId>
             <artifactId>bungeetablistplus-api-bungee</artifactId>
             <version>2.7.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.exceptionflug</groupId>
+            <artifactId>protocolize-api</artifactId>
+            <version>1.6.7-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.exceptionflug</groupId>
+            <artifactId>protocolize-items</artifactId>
+            <version>1.6.7-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.exceptionflug</groupId>
+            <artifactId>protocolize-inventory</artifactId>
+            <version>1.6.7-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

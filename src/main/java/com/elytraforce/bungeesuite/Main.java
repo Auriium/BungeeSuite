@@ -16,7 +16,6 @@ import com.elytraforce.bungeesuite.hook.TabListVar;
 import com.elytraforce.bungeesuite.listeners.MOTDListener;
 import com.elytraforce.bungeesuite.listeners.PlayerActivityListener;
 import com.elytraforce.bungeesuite.localchat.ChatController;
-import com.elytraforce.bungeesuite.localchat.ChatSpyListener;
 import com.elytraforce.bungeesuite.punish.PunishController;
 import com.elytraforce.bungeesuite.storage.SQLStorage;
 import net.md_5.bungee.api.ChatColor;
@@ -30,14 +29,11 @@ public class Main extends Plugin {
 
     private static Main instance;
     private PluginConfig config;
-    private ChatSpyListener chatSpyListener;
-
 
     private Filters filters;
 
     public static Main get() { return instance; }
     public Filters getFilters() { return this.filters; }
-    public ChatSpyListener getChatSpy() { return this.chatSpyListener; }
 
     @Override
     public void onDisable() {
@@ -84,7 +80,6 @@ public class Main extends Plugin {
 
         getProxy().getPluginManager().registerListener(this, new PlayerActivityListener(this));
         getProxy().getPluginManager().registerListener(this, new MOTDListener(this));
-        getProxy().getPluginManager().registerListener(this, chatSpyListener = new ChatSpyListener(this));
 
         AnnounceController.get();
         RestartController.get();

@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS player_info
     discord_out    BOOLEAN,
     pms         BOOLEAN,
     chat_color  VARCHAR(24),
-    safe_chat   BOOLEAN,
     PRIMARY KEY (id)
   );
 
@@ -22,11 +21,12 @@ CREATE TABLE IF NOT EXISTS player_login
 
 CREATE OR REPLACE view player_latest_login
 AS
-  SELECT *
-  FROM   player_login
-  ORDER  BY time DESC
-  LIMIT  1
-;
+  SELECT id, name, ip_address, time
+  from (
+         SELECT player_login.*, ROW_NUMBER() OVER (PARTITION BY id ORDER BY time DESC) AS rn
+         FROM player_login
+       ) m2
+  where m2.rn = 1;
 
 CREATE OR REPLACE view player_related_ip_login
 AS
@@ -110,4 +110,16 @@ AS
                           FROM   player_punish_reverse
                           WHERE  player_punish_reverse.punish_id =
                                  player_punish.id);
+
+CREATE OR REPLACE view player_combined_info
+AS
+  SELECT id, name, nickname, discord_in, discord_out, pms, chat_color, level, experience, money, unlocked_rewards
+  from (
+         SELECT player_login.id, player_login.name, player_info.nickname, player_info.discord_in, player_info.discord_out, player_info.pms, player_info.chat_color, levels_player.level, levels_player.experience, levels_player.money, levels_player.unlocked_rewards, ROW_NUMBER() OVER (PARTITION BY id ORDER BY time DESC) AS rn
+         FROM ((player_info
+                   INNER JOIN player_login ON player_info.id = player_login.id)
+                   INNER JOIN levels_player ON player_info.id = levels_player.player_uuid)
+       ) m2
+  where m2.rn = 1;
+
 

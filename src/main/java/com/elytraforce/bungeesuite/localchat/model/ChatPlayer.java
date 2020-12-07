@@ -140,6 +140,19 @@ public class ChatPlayer {
         }
     }
 
+    public void adjustP(PlayerDelta delta) {
+        switch (delta.getType()) {
+            case CHAT_COLOR:
+                this.color = ChatColor.valueOf(delta.getAction());
+            case DISCORD_IN:
+                this.discord_in = Boolean.getBoolean(delta.getAction());
+            case PM_ENABLED:
+                this.pms = Boolean.getBoolean(delta.getAction());
+            case DISCORD_OUT:
+                this.discord_out = Boolean.getBoolean(delta.getAction());
+        }
+    }
+
     public void update() {
         if (inDatabase) {
             SQLStorage.get().updatePlayer(this);
