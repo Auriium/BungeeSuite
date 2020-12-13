@@ -10,6 +10,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class InfoCommand extends BungeeCommand {
 
@@ -37,16 +38,17 @@ public class InfoCommand extends BungeeCommand {
             return;
         }
 
-        //TODO: pages
-        getUuidFromArg(0,args).thenAccept(uuid -> {
+        getUuidFromArg(0,args).thenCompose(uuid -> {
             if (uuid == null) {
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
+                return CompletableFuture.completedFuture(null);
             } else {
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.GRAY + "Fetching punishment information...");
-                getStorage().getPunishments(uuid).thenAccept(results -> {
+                return getStorage().getPunishments(uuid).thenAccept(results -> {
 
                     if (results.size() == 0) {
                         sender.sendMessage(ChatColor.RED + "Player has no punishments on record!");
+                        return;
                     }
 
                     if (page + 1 > this.calculatePages(results.size()) || page < 0) {

@@ -4,6 +4,8 @@ import com.elytraforce.bungeesuite.Main;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 
+import java.util.concurrent.CompletableFuture;
+
 public class UnbanCommand extends BungeeCommand {
 
     public UnbanCommand(Main plugin) {
@@ -19,11 +21,13 @@ public class UnbanCommand extends BungeeCommand {
             return;
         }
 
-        getUuidFromArg(0,args).thenAccept(uuid -> {
+        getUuidFromArg(0,args).thenCompose(uuid -> {
+
             if (uuid == null) {
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
+                return CompletableFuture.completedFuture(null);
             } else {
-                getStorage().getActiveBan(uuid).thenAccept(ban -> {
+                return getStorage().getActiveBan(uuid).thenAccept(ban -> {
                     if (ban == null) {
                         sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That user is not banned");
                     } else {

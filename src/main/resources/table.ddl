@@ -1,37 +1,56 @@
 
-
-CREATE TABLE IF NOT EXISTS player_info
+CREATE TABLE IF NOT EXISTS players
   (
-    id          CHAR(36),
-    nickname    VARCHAR(24),
+    id            CHAR(36) NOT NULL UNIQUE,
+    name          VARCHAR(24),
+    nickname      VARCHAR(24),
+    PRIMARY KEY (id)
+  );
+
+CREATE TABLE IF NOT EXISTS players_levels
+  (
+    foreign_id    CHAR(36),
+    level         INT(4),
+    experience    INT(4),
+    money         INT(4),
+    unlocked_rewards    VARCHAR(100) NOT NULL,
+    FOREIGN KEY (foreign_id) REFERENCES players (id) ON DELETE CASCADE
+  );
+
+CREATE TABLE IF NOT EXISTS player_settings
+  (
+    foreign_id     CHAR(36),
     discord_in     BOOLEAN,
     discord_out    BOOLEAN,
-    pms         BOOLEAN,
-    chat_color  VARCHAR(24),
-    PRIMARY KEY (id)
+    pms            BOOLEAN,
+    chat_color     VARCHAR(24),
+    chat_enabled   BOOLEAN,
+    ignored_players  VARCHAR(100) NOT NULL,
+    FOREIGN KEY (foreign_id) REFERENCES players (id) ON DELETE CASCADE
   );
 
 CREATE TABLE IF NOT EXISTS player_login
   (
-     id         CHAR(36),
-     name       VARCHAR(16),
-     ip_address INT UNSIGNED NOT NULL,
-     time       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+     foreign_id      CHAR(36),
+     name            VARCHAR(16),
+     ip_address      INT UNSIGNED NOT NULL,
+     time            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     FOREIGN KEY (foreign_id) REFERENCES players (id) ON DELETE CASCADE
   );
 
 CREATE OR REPLACE view player_latest_login
 AS
-  SELECT id, name, ip_address, time
+  SELECT foreign_id, name, ip_address, time
   from (
-         SELECT player_login.*, ROW_NUMBER() OVER (PARTITION BY id ORDER BY time DESC) AS rn
+         SELECT player_login.*, ROW_NUMBER() OVER (PARTITION BY foreign_id ORDER BY time DESC) AS rn
          FROM player_login
        ) m2
   where m2.rn = 1;
 
 CREATE OR REPLACE view player_related_ip_login
 AS
-  SELECT DISTINCT l1.id   id1,
-                  l2.id   id2,
+  SELECT DISTINCT l1.foreign_id   id1,
+                  l2.foreign_id   id2,
                   l1.name name1,
                   l2.name name2,
                   l1.time time1,
@@ -39,7 +58,7 @@ AS
   FROM   player_login l1
          JOIN player_login l2
            ON l1.ip_address = l2.ip_address
-              AND l1.id <> l2.id
+              AND l1.foreign_id <> l2.foreign_id
 ;
 
 CREATE TABLE IF NOT EXISTS player_ip_ban
@@ -113,13 +132,13 @@ AS
 
 CREATE OR REPLACE view player_combined_info
 AS
-  SELECT id, name, nickname, discord_in, discord_out, pms, chat_color, level, experience, money, unlocked_rewards
-  from (
-         SELECT player_login.id, player_login.name, player_info.nickname, player_info.discord_in, player_info.discord_out, player_info.pms, player_info.chat_color, levels_player.level, levels_player.experience, levels_player.money, levels_player.unlocked_rewards, ROW_NUMBER() OVER (PARTITION BY id ORDER BY time DESC) AS rn
-         FROM ((player_info
-                   INNER JOIN player_login ON player_info.id = player_login.id)
-                   INNER JOIN levels_player ON player_info.id = levels_player.player_uuid)
-       ) m2
-  where m2.rn = 1;
+   SELECT players.id, players.name, players.nickname, player_settings.discord_in,
+   player_settings.discord_out, player_settings.pms, player_settings.chat_color,
+   player_settings.chat_enabled, player_settings.ignored_players, players_levels.level, players_levels.experience,
+   players_levels.money, players_levels.unlocked_rewards
+
+   FROM ((players
+         INNER JOIN player_settings ON players.id = player_settings.foreign_id)
+         INNER JOIN players_levels ON players.id = players_levels.foreign_id);
 
 

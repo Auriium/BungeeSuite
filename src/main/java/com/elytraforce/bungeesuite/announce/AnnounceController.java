@@ -1,8 +1,8 @@
 package com.elytraforce.bungeesuite.announce;
 
+import com.elytraforce.aUtils.chat.BChat;
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.config.PluginConfig;
-import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.ProxyServer;
@@ -48,7 +48,7 @@ public class AnnounceController {
 				Collections.shuffle(announcements);
 				ArrayList<String> list = announcements.get(0);
 				for (ProxiedPlayer p : main.getProxy().getPlayers()) {
-					list.forEach(s -> p.sendMessage(AuriBungeeUtil.centerMessage(s)));
+					list.forEach(s -> p.sendMessage(BChat.centerMessage(s)));
 
 				}
 			}
@@ -57,7 +57,7 @@ public class AnnounceController {
 
 	public void announceString(String string) {
 		for (ProxiedPlayer player : Main.get().getProxy().getPlayers()) {
-			player.sendMessage(AuriBungeeUtil.colorString(config.getAnnouncePrefix() + string));
+			player.sendMessage(BChat.colorString(config.getAnnouncePrefix() + string));
 		}
 	}
 
@@ -76,7 +76,7 @@ public class AnnounceController {
 
 	public void announceActionbar(String string) {
 		for (ProxiedPlayer player : Main.get().getProxy().getPlayers()) {
-			player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(AuriBungeeUtil.colorString(string)));
+			player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(BChat.colorString(string)));
 		}
 	}
 

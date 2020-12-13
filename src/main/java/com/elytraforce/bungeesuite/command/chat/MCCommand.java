@@ -3,8 +3,9 @@ package com.elytraforce.bungeesuite.command.chat;
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.command.BungeeCommand;
 import com.elytraforce.bungeesuite.localchat.ChatController;
+import com.elytraforce.bungeesuite.localchat.PlayerController;
 import com.elytraforce.bungeesuite.localchat.model.ChatMode;
-import com.elytraforce.bungeesuite.localchat.model.ChatPlayer;
+import com.elytraforce.bungeesuite.localchat.player.ChatPlayer;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -21,7 +22,7 @@ public class MCCommand extends BungeeCommand {
     @Override
     public void onCommand(CommandSender sender, String[] args) {
         if (sender instanceof ProxiedPlayer) {
-            ChatPlayer pp = ChatController.get().getPlayer(((ProxiedPlayer) sender).getUniqueId());
+            ChatPlayer pp = PlayerController.get().getPlayer(((ProxiedPlayer) sender).getUniqueId());
             if (args.length == 0) {
                 if (pp.getChatMode() != ChatMode.MOD) {
                     sender.sendMessage(getConfig().getPrefix() + ChatColor.GREEN + "Switched you to Staff Chat");

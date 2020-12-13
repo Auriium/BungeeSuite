@@ -3,7 +3,8 @@ package com.elytraforce.bungeesuite.command.chat;
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.command.BungeeCommand;
 import com.elytraforce.bungeesuite.localchat.ChatController;
-import com.elytraforce.bungeesuite.localchat.model.ChatPlayer;
+import com.elytraforce.bungeesuite.localchat.PlayerController;
+import com.elytraforce.bungeesuite.localchat.player.ChatPlayer;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -19,7 +20,7 @@ public class PMCommand extends BungeeCommand {
     @Override
     public void onCommand(CommandSender sender, String[] args) {
         if (sender instanceof ProxiedPlayer) {
-            ChatPlayer pp = ChatController.get().getPlayer(((ProxiedPlayer) sender).getUniqueId());
+            ChatPlayer pp = PlayerController.get().getPlayer(((ProxiedPlayer) sender).getUniqueId());
             if (args.length < 2) {
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Usage: /" + commandName + " <player> <message>");
                 return;
@@ -36,7 +37,7 @@ public class PMCommand extends BungeeCommand {
                 sb.append(args[i]);
             }
 
-            ChatPlayer target = ChatController.get().getPlayer(Main.get().getProxy().getPlayer(args[0]));
+            ChatPlayer target = PlayerController.get().getPlayer(Main.get().getProxy().getPlayer(args[0]));
 
             pp.setPmReciever(target);
             target.setPmReciever(pp);

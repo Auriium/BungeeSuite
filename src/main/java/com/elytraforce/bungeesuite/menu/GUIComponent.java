@@ -1,3 +1,4 @@
+/*
 package com.elytraforce.bungeesuite.menu;
 
 import de.exceptionflug.protocolize.inventory.event.InventoryClickEvent;
@@ -17,3 +18,4 @@ public class GUIComponent {
     }
 
 }
+*/

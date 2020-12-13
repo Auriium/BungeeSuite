@@ -3,7 +3,8 @@ package com.elytraforce.bungeesuite.command.chat;
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.command.BungeeCommand;
 import com.elytraforce.bungeesuite.localchat.ChatController;
-import com.elytraforce.bungeesuite.localchat.model.ChatPlayer;
+import com.elytraforce.bungeesuite.localchat.PlayerController;
+import com.elytraforce.bungeesuite.localchat.player.ChatPlayer;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -37,7 +38,7 @@ public class NickCommand extends BungeeCommand {
         }
 
         if (sender instanceof ProxiedPlayer) {
-            ChatPlayer pp = ChatController.get().getPlayer(((ProxiedPlayer) sender).getUniqueId());
+            ChatPlayer pp = PlayerController.get().getPlayer(((ProxiedPlayer) sender).getUniqueId());
 
             ChatPlayer target;
             String nick;
@@ -51,7 +52,7 @@ public class NickCommand extends BungeeCommand {
                     sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That isn't a valid player!");
                     return;
                 } else  {
-                    target = ChatController.get().getPlayer(Main.get().getProxy().getPlayer(args[0]));
+                    target = PlayerController.get().getPlayer(Main.get().getProxy().getPlayer(args[0]));
                 }
             }
 

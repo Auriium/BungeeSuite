@@ -1,23 +1,18 @@
 package com.elytraforce.bungeesuite.localchat;
 
+import com.elytraforce.aUtils.chat.BChat;
+import com.elytraforce.aUtils.logger.BLogger;
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.antiswear.Filters;
 import com.elytraforce.bungeesuite.config.PluginConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
-import com.elytraforce.bungeesuite.localchat.model.ChatMode;
-import com.elytraforce.bungeesuite.localchat.model.ChatPlayer;
 import com.elytraforce.bungeesuite.localchat.model.Delta;
-import com.elytraforce.bungeesuite.localchat.model.PlayerDelta;
-import com.elytraforce.bungeesuite.punish.PunishController;
-import com.elytraforce.bungeesuite.storage.SQLStorage;
-import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
+import com.elytraforce.bungeesuite.localchat.player.ChatPlayer;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.*;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.*;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
-import net.md_5.bungee.api.event.PlayerDisconnectEvent;
-import net.md_5.bungee.api.event.PostLoginEvent;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -25,19 +20,18 @@ import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisPubSub;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("deprecated")
 public class ChatController {
-    private ArrayList<ChatPlayer> players;
-    private static ChatController instance;
-    private JedisPool pool;
-    private Filters filters;
 
-    private HashMap<ProxiedPlayer, Boolean> spyMap;
+    private static ChatController instance;
+    private final JedisPool pool;
+    private final Filters filters;
+    private final HashMap<ProxiedPlayer, Boolean> spyMap;
+
     public boolean getIsSpying(ProxiedPlayer player) {
         return spyMap.getOrDefault(player, false);
     }
@@ -50,8 +44,7 @@ public class ChatController {
         spyMap.put(player, false);
     }
 
-    private static final String BUNGEE_CHANNEL = "channel_bungee";
-    private static final String GUI_CHANNEL = "channel_gui_i";
+    private final String BUNGEE_CHANNEL = "channel_bungee";
 
     private ChatController() {
         String password = PluginConfig.get().getRedisPassword();
@@ -66,29 +59,20 @@ public class ChatController {
         Main.get().getProxy().getScheduler().runAsync(Main.get(), () -> {
             try (Jedis jedis = pool.getResource()){
                 jedis.subscribe(new BungeeReciever(),BUNGEE_CHANNEL);
-                jedis.subscribe(new GUIReciever(),GUI_CHANNEL);
+
             } catch (Exception e) {
-                AuriBungeeUtil.logError("Error connecting to redis - " + e.getMessage());
-                AuriBungeeUtil.logError("Broken redis pool");
+                BLogger.error("Error connecting to redis - " + e.getMessage());
+                BLogger.error("Broken redis pool");
             }
-            AuriBungeeUtil.logError("Registered the listener!");
+            BLogger.error("Registered the listener!");
         });
-
-        Main.get().getProxy().getScheduler().schedule(Main.get(), () -> {
-            for (ChatPlayer player : players) {
-                player.update();
-            }
-        },2L,TimeUnit.MINUTES);
-
-
-        this.players = new ArrayList<>();
 
         filters = Main.get().getFilters();
         this.spyMap = new HashMap<>();
     }
 
-    public void handleSpy(ChatEvent event) {
-        if (event.isCommand()) {
+    public void handleCommandSpy(ChatEvent event) {
+        if (!event.isCommand()) {
             if (event.getMessage().startsWith("/mc") || event.getMessage().startsWith("/ac")) { return; }
         }
 
@@ -115,89 +99,38 @@ public class ChatController {
         }
     }
 
-    public void handleLogin(PostLoginEvent event) {
-        SQLStorage.get().getOrDefaultPlayer(event.getPlayer().getUniqueId()).thenAccept(player -> {
-            players.add(player);
-            //the power of callbacks
-        });
-    }
-
-    public void handleDC(PlayerDisconnectEvent event) {
-        ChatPlayer player = getPlayer(event.getPlayer());
-        if (player != null) {
-            player.update();
-            players.remove(player);
-
-        }
-    }
-
-    //highest priority
-    public void onChat(ChatEvent event) {
-        PunishController.get().handleChat(event);
-        handleSpy(event);
-
-        if (event.isCommand()) { return; }
-
-        filters.handleEvent(event);
-
-        if (!event.isCancelled()) {
-            event.setCancelled(true);
-
-            //now we talk
-            if (event.getSender() instanceof ProxiedPlayer) {
-               ChatPlayer player = getPlayer((ProxiedPlayer) event.getSender());
-
-                ChatMode mode = player.getChatMode();
-
-                //TODO: replace this with something cleaner
-                switch(mode) {
-                    case NORMAL:
-                        sendNormal(event.getMessage(),player);
-                        break;
-                    case MOD:
-                        sendStaff(event.getMessage(),player);
-                        break;
-                    case ADMIN:
-                        sendAdmin(event.getMessage(),player);
-                        break;
-                    case GLOBAL:
-                        sendGlobal(event.getMessage(),player);
-                        break;
-                }
-            }
-        }
-    }
 
     public void sendNormal(String message, ChatPlayer player) {
-        player.asProxiedPlayer().getServer().getInfo().getPlayers()
+        player.asProxiedPlayer().getServer().getInfo().getPlayers().stream()
+                .filter(p -> !player.isIgnored(p))
                 .forEach(player1 -> {
                     player1.sendMessage(formatNormal(message,player).create());
                 });
-                if (player.getSendDiscord()) { this.callDiscord(player.asProxiedPlayer(),message); }
+                if (player.getSettings().isDiscordOut()) { this.callDiscord(player.asProxiedPlayer(),message); }
     }
 
     private ComponentBuilder formatNormal(String message, ChatPlayer player) {
 
-        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(player.getLevel() + " &7| " + player.getOnlineGroupName()));
-        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&r" + player.getNickname() + " &r&f»&f "));
+        BaseComponent[] first = TextComponent.fromLegacyText(BChat.colorString(player.getStats().getLevel() + " &7| " + player.getOnlineGroupName()));
+        BaseComponent[] second = TextComponent.fromLegacyText(BChat.colorString("&r" + player.getNickname() + " &r&f»&f "));
         BaseComponent[] third;
 
         if (player.isOnlineDonator()) {
-            third = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
+            third = TextComponent.fromLegacyText(BChat.colorString(message
                     .trim().replaceAll(" +", " ")));
         } else {
             third = TextComponent.fromLegacyText(message
                     .trim().replaceAll(" +", " "));
         }
 
-        BaseComponent[] hover = TextComponent.fromLegacyText( AuriBungeeUtil.colorString(
+        BaseComponent[] hover = TextComponent.fromLegacyText( BChat.colorString(
                 player.getOnlineGroupName() + "&r" )
         );
 
-        BaseComponent[] hover1 = TextComponent.fromLegacyText( AuriBungeeUtil.colorString(
+        BaseComponent[] hover1 = TextComponent.fromLegacyText( BChat.colorString(
                 "&7" + player.getName() + "&7\n \n"
-                        + "&7Level: &b" + player.getLevel() + "\n"
-                        + "&7Balance: &e" + player.getMoney() + "⛃\n\n"
+                        + "&7Level: &b" + player.getStats().getLevel() + "\n"
+                        + "&7Balance: &e" + player.getStats().getMoney() + "⛃\n\n"
                         + "&7Currently playing on &7(&f" + player.getServerName() + "&7)" )
         );
 
@@ -206,74 +139,79 @@ public class ChatController {
 
     public void sendStaff(String message, ChatPlayer player) {
         Main.get().getProxy().getPlayers().stream()
-                .filter(p -> p.hasPermission("elytraforce.mod"))
-                .forEach(player1 -> {
-                    player1.sendMessage(formatStaff(message,player).create());
-                });
+                .filter(p -> p.hasPermission("elytraforce.helper"))
+                .forEach(player1 -> player1.sendMessage(formatStaff(message,player).create()));
     }
 
     private ComponentBuilder formatStaff(String message, ChatPlayer player) {
-        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&b&lSTAFF"));
-        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(" &7>> &r" + player.getOnlineGroupName() + "&r" + player.getNickname() + "&r&f:&f "));
-        BaseComponent[] third = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
+        BaseComponent[] first = TextComponent.fromLegacyText(BChat.colorString("&b&lSTAFF&r "));
+        BaseComponent[] second = TextComponent.fromLegacyText(BChat.colorString("&r&7>> &r" + player.getOnlineGroupName()));
+        BaseComponent[] third = TextComponent.fromLegacyText(BChat.colorString("&r" + player.getNickname() + "&r&f:&f "));
+        BaseComponent[] fourth = TextComponent.fromLegacyText(BChat.colorString(message
                 .trim().replaceAll(" +", " ")));
 
-        return new ComponentBuilder("").append(first).append(second).bold(false).append(third);
+        return new ComponentBuilder("").bold(true).append(first).bold(false).append(second).bold(false).append(third).bold(false).append(fourth);
     }
 
     public void sendAdmin(String message, ChatPlayer player) {
         Main.get().getProxy().getPlayers().stream()
                 .filter(p -> p.hasPermission("elytraforce.admin"))
-                .forEach(player1 -> {
-                    player1.sendMessage(formatAdmin(message,player).create());
-                });
+                .forEach(player1 -> player1.sendMessage(formatAdmin(message,player).create()));
     }
 
     private ComponentBuilder formatAdmin(String message, ChatPlayer player) {
-        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&4&lADMIN"));
-        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(" &7>> &r" + player.getOnlineGroupName() + "&r" + player.getNickname() + "&r&f:&f "));
-        BaseComponent[] third = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
+        BaseComponent[] first = TextComponent.fromLegacyText(BChat.colorString("&4&lADMIN&r "));
+        BaseComponent[] second = TextComponent.fromLegacyText(BChat.colorString("&r&7>> &r" + player.getOnlineGroupName()));
+        BaseComponent[] third = TextComponent.fromLegacyText(BChat.colorString("&r" + player.getNickname() + "&r&f:&f "));
+        BaseComponent[] fourth = TextComponent.fromLegacyText(BChat.colorString(message
                 .trim().replaceAll(" +", " ")));
 
-        return new ComponentBuilder("").append(first).append(second).bold(false).append(third);
+        return new ComponentBuilder("").bold(true).append(first).bold(false).append(second).bold(false).append(third).bold(false).append(fourth);
     }
 
     public void sendGlobal(String message, ChatPlayer player) {
         if (filters.handleString(message)) {
-            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + AuriBungeeUtil.colorString("&cPlease do not swear on ElytraForce!"));
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + BChat.colorString("&cPlease do not swear on ElytraForce!"));
             return;
         }
 
         Main.get().getProxy().getPlayers().stream()
-                .forEach(player1 -> {
-                    player1.sendMessage(formatGlobal(message,player).create());
-                }); if (player.getSendDiscord()) { this.callDiscord(player.asProxiedPlayer(),message); }
+                .filter(p -> !player.isIgnored(p))
+                .forEach(player1 -> player1.sendMessage(formatGlobal(message,player).create())); if (player.getSettings().isDiscordOut()) { this.callDiscord(player.asProxiedPlayer(),message); }
     }
 
     private ComponentBuilder formatGlobal(String message, ChatPlayer player) {
-        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&9&lGLOBAL"));
-        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(" &7>> &r" + player.getOnlineGroupName() + "&r" + player.getNickname() + "&r&f:&f "));
-        BaseComponent[] third = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
+        BaseComponent[] first = TextComponent.fromLegacyText(BChat.colorString("&9&lGLOBAL&r "));
+        BaseComponent[] second = TextComponent.fromLegacyText(BChat.colorString("&r&7>> &r" + player.getOnlineGroupName()));
+        BaseComponent[] third = TextComponent.fromLegacyText(BChat.colorString("&r" + player.getNickname() + "&r&f:&f "));
+        BaseComponent[] fourth = TextComponent.fromLegacyText(BChat.colorString(message
                 .trim().replaceAll(" +", " ")));
 
-        return new ComponentBuilder("").append(first).append(second).bold(false).append(third);
+        return new ComponentBuilder("").bold(true).append(first).bold(false).append(second).bold(false).append(third).bold(false).append(fourth);
     }
 
     public void sendReply(String message, ChatPlayer player) {
         try {
             player.getPmReciever().getName();
         } catch (NullPointerException exception) {
-            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + AuriBungeeUtil.colorString("&cYour target is invalid or offline!"));
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + BChat.colorString("&cYour target is invalid or offline!"));
             player.setPmReciever(null);
             return;
         }
 
         if (filters.handleString(message)) {
-            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + AuriBungeeUtil.colorString("&cPlease do not swear on ElytraForce!"));
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + BChat.colorString("&cPlease do not swear on ElytraForce!"));
             return;
         }
 
-        player.getPmReciever().asProxiedPlayer().sendMessage(formatPMIn(message,player.getPmReciever(),player).create());
+        if (player.isIgnored(player.getPmReciever())) {
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + BChat.colorString("&cYou have your target set as ignored!"));
+            return;
+        }
+
+        if (!player.getPmReciever().isIgnored(player)) {
+            player.getPmReciever().asProxiedPlayer().sendMessage(formatPMIn(message,player.getPmReciever(),player).create());
+        }
         player.asProxiedPlayer().sendMessage(formatPMOut(message,player,player.getPmReciever()).create());
     }
 
@@ -281,31 +219,38 @@ public class ChatController {
         try {
             target.getName();
         } catch (NullPointerException exception) {
-            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + AuriBungeeUtil.colorString("&cYour target is invalid or offline!"));
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + BChat.colorString("&cYour target is invalid or offline!"));
             player.setPmReciever(null);
             return;
         }
 
         if (filters.handleString(message)) {
-            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + AuriBungeeUtil.colorString("&cPlease do not swear on ElytraForce!"));
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + BChat.colorString("&cPlease do not swear on ElytraForce!"));
             return;
         }
 
-        player.getPmReciever().asProxiedPlayer().sendMessage(formatPMIn(message,target,player).create());
+        if (player.isIgnored(target)) {
+            player.asProxiedPlayer().sendMessage(PluginConfig.get().getPrefix() + BChat.colorString("&cYou have your target set as ignored!"));
+            return;
+        }
+
+        if (!player.getPmReciever().isIgnored(player)) {
+            player.getPmReciever().asProxiedPlayer().sendMessage(formatPMIn(message,target,player).create());
+        }
         player.asProxiedPlayer().sendMessage(formatPMOut(message,player,target).create());
     }
 
     private ComponentBuilder formatPMOut(String message, ChatPlayer player, ChatPlayer target) {
-        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&7You &7-> &e" + target.getName() + " &r"));
-        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
+        BaseComponent[] first = TextComponent.fromLegacyText(BChat.colorString("&7You &7-> &e" + target.getName() + " &r"));
+        BaseComponent[] second = TextComponent.fromLegacyText(BChat.colorString(message
                 .trim().replaceAll(" +", " ")));
 
         return new ComponentBuilder("").append(first).bold(false).append(second);
     }
 
     private ComponentBuilder formatPMIn(String message, ChatPlayer player, ChatPlayer target) {
-        BaseComponent[] first = TextComponent.fromLegacyText(AuriBungeeUtil.colorString("&e" + target.getName() + " &7-> &7You" + " &r"));
-        BaseComponent[] second = TextComponent.fromLegacyText(AuriBungeeUtil.colorString(message
+        BaseComponent[] first = TextComponent.fromLegacyText(BChat.colorString("&e" + target.getName() + " &7-> &7You" + " &r"));
+        BaseComponent[] second = TextComponent.fromLegacyText(BChat.colorString(message
                 .trim().replaceAll(" +", " ")));
 
         return new ComponentBuilder("").append(first).bold(false).append(second);
@@ -332,73 +277,39 @@ public class ChatController {
         return new Delta(id,amount,change,value);
     }
 
-    public PlayerDelta decryptPlayerDelta(String string) {
+    public ChatPlayer.PlayerDelta decryptPlayerDelta(String string) {
         String[] parts = string.split(":");
         UUID id = UUID.fromString(parts[0]);
         String action = parts[1];
-        PlayerDelta.TargetEnum change = PlayerDelta.TargetEnum.valueOf(parts[2]);
-        return new PlayerDelta(id,action,change);
+        ChatPlayer.PlayerDelta.TargetEnum change = ChatPlayer.PlayerDelta.TargetEnum.valueOf(parts[2]);
+        return new ChatPlayer.PlayerDelta(id,action,change);
     }
 
-    public String encryptPlayerDelta(PlayerDelta playerDelta) {
-        String adapt = playerDelta.getTarget().toString() + ":" + playerDelta.getAction() + ":" + playerDelta.getType().name();
-        return adapt;
+    public String encryptPlayerDelta(ChatPlayer.PlayerDelta playerDelta) {
+        return playerDelta.getTarget().toString() + ":" + playerDelta.getAction() + ":" + playerDelta.getType().name();
     }
 
-    public ChatPlayer getPlayer(UUID uuid) {
-        for (ChatPlayer p : this.players) {
-            if (p.getUUID().equals(uuid)) {
-                return p;
-            }
-        }
-        return null;
-    }
 
-    public ChatPlayer getPlayer(ProxiedPlayer player) {
-        return getPlayer(player.getUniqueId());
-    }
 
     public class BungeeReciever extends JedisPubSub {
         @Override
         public void onMessage(String channel, final String msg) {
             //decrypt delta
+            
             Delta delta = decryptDelta(msg);
-            if (getPlayer(delta.getTarget()) != null) {
-                getPlayer(delta.getTarget()).adjust(delta);
-            }
-        }
-    }
-
-    public class GUIReciever extends JedisPubSub {
-        @Override
-        public void onMessage(String channel, final String msg) {
-            //decrypt delta
-            AuriBungeeUtil.logError("recieved PDELTA message with delta: " + msg);
-            PlayerDelta delta = decryptPlayerDelta(msg);
-            AuriBungeeUtil.logError(delta.getTarget().toString());
-            if (getPlayer(delta.getTarget()) != null) {
-                getPlayer(delta.getTarget()).adjustP(delta);
+            if (PlayerController.get().getPlayer(delta.getTarget()) != null) {
+                PlayerController.get().getPlayer(delta.getTarget()).adjust(delta);
             }
         }
     }
 
     /*ONLY USE this if it is required, blocks thread, must be used async*/
-    public ChatPlayer getPlayerAbsolute(UUID id) {
-        if (Main.get().getProxy().getPlayer(id) != null) {
-            return this.getPlayer(id);
-        } else {
-            return SQLStorage.get().getOrDefaultPlayer(id).join();
-        }
-    }
+
 
     public static ChatController get() {
         return Objects.requireNonNullElseGet(instance, () -> instance = new ChatController());
     }
 
-    public void shutdown() {
-        for (ChatPlayer player : players) {
-            player.update();
-        }
-    }
+
 
 }

@@ -1,14 +1,17 @@
 package com.elytraforce.bungeesuite.storage;
 
+import com.elytraforce.aUtils.database.BDatabase;
+import com.elytraforce.aUtils.logger.BLogger;
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.config.PluginConfig;
-import com.elytraforce.bungeesuite.localchat.model.ChatPlayer;
+import com.elytraforce.bungeesuite.localchat.player.ChatPlayer;
+import com.elytraforce.bungeesuite.localchat.player.Settings;
+import com.elytraforce.bungeesuite.localchat.player.Stats;
 import com.elytraforce.bungeesuite.model.Ban;
 import com.elytraforce.bungeesuite.model.IpBan;
 import com.elytraforce.bungeesuite.model.Mute;
-import com.elytraforce.bungeesuite.database.Database;
-import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import com.elytraforce.bungeesuite.util.TimeFormatUtil;
+import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -16,7 +19,9 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -27,17 +32,18 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 @SuppressWarnings("unused")
 public class SQLStorage {
     private static SQLStorage instance;
-    private Database database;
+    private BDatabase database;
 
     private final DateFormat dateFormat = new SimpleDateFormat("MM/dd/yy");
 
     private SQLStorage() {
-        database = Database.newDatabase()
-                .withPluginUsing(Main.get())
+        database = BDatabase.newDatabase();
+        database.withPluginUsing(Main.get())
                 .withUsername(PluginConfig.get().getDatabaseUser())
                 .withPassword(PluginConfig.get().getDatabasePassword())
                 .withConnectionInfo(PluginConfig.get().getDatabase(), PluginConfig.get().getDatabasePort(), PluginConfig.get().getDatabaseName(),false)
@@ -46,63 +52,84 @@ public class SQLStorage {
         try {
             database.createTablesFromSchema("table.ddl", Main.class);
         } catch (SQLException | IOException e) {
-            AuriBungeeUtil.logError("Error when initializing the BungeeSuite SQL table! See this error:");
+            BLogger.error("Error when initializing the BungeeSuite SQL table! See this error:");
             e.printStackTrace();
         }
+        
     }
 
     public void shutdown() {
         database.close();
     }
 
-    public CompletableFuture<Integer> insertPlayer(ChatPlayer player) {
-        CompletableFuture<Integer> future = new CompletableFuture<>();
+    public CompletableFuture<Void> insertPlayer(@NotNull ChatPlayer player) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
 
-            String sql = "INSERT INTO player_info(id, nickname, discord_in, discord_out, pms, chat_color) VALUES (?, ?, ?, ?, ?, ?);";
+            String first = "INSERT INTO players(id, name, nickname) VALUES (?,?,?);";
+            String second = "INSERT INTO player_settings(foreign_id, discord_in, discord_out, pms, chat_color, chat_enabled, ignored_players) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
-            Object[] toSet = new Object[]{
+            Object[] firstSet = new Object[]{
                     player.getUUID().toString(),
-                    player.getNicknameInternal(),
-                    player.getRecieveDiscord(),
-                    player.getSendDiscord(),
-                    player.getPmsEnabled(),
-                    player.getChatColor().name()
+                    player.getName(),
+                    player.getNicknameInternal()
             };
 
-            database.updateAsync(sql,toSet, s -> {
-                player.setInDatabase(true);
-                future.complete(s);
-                }
-            );
+            Object[] secondSet = new Object[]{
+                    player.getUUID().toString(),
+                    player.getSettings().isDiscordIn(),
+                    player.getSettings().isDiscordOut(),
+                    player.getSettings().isPmsEnabled(),
+                    player.getSettings().getChatColor().name(),
+                    player.getSettings().isChatEnabled(),
+                    new Gson().toJson(player.getSettings().getIgnoredPlayers())
+            };
 
-        return future;
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    database.update(first,firstSet);
+                    database.update(second,secondSet);
+                    return null;
+                } catch (SQLException e) {
+                    throw new CompletionException(e);
+                }
+            });
     }
 
-    public CompletableFuture<Integer> updatePlayer(ChatPlayer player) {
-        CompletableFuture<Integer> future = new CompletableFuture<>();
+    public CompletableFuture<Void> updatePlayer(@NotNull ChatPlayer player) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
 
+        String first = "UPDATE players SET name = ?, nickname = ? WHERE id = ?;";
+        String second = "UPDATE player_settings SET discord_in = ?, discord_out = ?, pms = ?, chat_color = ?, chat_enabled = ?, ignored_players = ? WHERE foreign_id = ?;";
 
-        String sql = "UPDATE player_info SET nickname = ?, discord_in = ?, discord_out = ?, pms = ?, chat_color = ? WHERE id = ?;";
-
-        Object[] toSet = new Object[]{
-
+        Object[] firstSet = new Object[]{
+                player.getName(),
                 player.getNicknameInternal(),
-                player.getRecieveDiscord(),
-                player.getSendDiscord(),
-                player.getPmsEnabled(),
-                player.getChatColor().name(),
                 player.getUUID().toString()
         };
 
-        database.updateAsync(sql,toSet,future::complete);
+        Object[] secondSet = new Object[]{
+                player.getSettings().isDiscordIn(),
+                player.getSettings().isDiscordOut(),
+                player.getSettings().isPmsEnabled(),
+                player.getSettings().getChatColor().name(),
+                player.getSettings().isChatEnabled(),
+                new Gson().toJson(player.getSettings().getIgnoredPlayers()),
+                player.getUUID().toString()
+        };
 
-        return future;
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                database.update(first,firstSet);
+                database.update(second,secondSet);
+                return null;
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 
-    public CompletableFuture<Integer> trackLogin(PendingConnection connection) {
-        CompletableFuture<Integer> future = new CompletableFuture<>();
-
-        String sql = "INSERT INTO player_login(id, name, ip_address) VALUES (?, ?, INET_ATON(?));";
+    public CompletableFuture<Void> trackLogin(@NotNull PendingConnection connection) {
+        String sql = "INSERT INTO player_login(foreign_id, name, ip_address) VALUES (?, ?, INET_ATON(?));";
 
         Object[] toSet = new Object[]{
                 connection.getUniqueId().toString(),
@@ -110,15 +137,18 @@ public class SQLStorage {
                 connection.getAddress().getAddress().getHostAddress()
         };
 
-        database.updateAsync(sql,toSet, future::complete);
-
-        return future;
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                database.update(sql,toSet);
+                return null;
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 
     //things we've learned retard - these cannot have fucking return values. do not try to completeAsync them either, they must be completed synchronously.
-    public CompletableFuture<Integer> mutePlayer(String sender, String targetName, UUID id, long expiry, String reason) {
-        CompletableFuture<Integer> future = new CompletableFuture<>();
-
+    public CompletableFuture<Void> mutePlayer(String sender, String targetName, UUID id, long expiry, String reason) {
         String sql = "INSERT INTO player_punish(banned_id, sender_id, reason, creation_date, expiry_date, type) VALUES (?, ?, ?, ?, ?, 'mute');";
 
         Object[] toSet = new Object[]{
@@ -129,14 +159,17 @@ public class SQLStorage {
                 expiry == -1 ? null : new Timestamp(expiry)
         };
 
-        database.updateAsync(sql,toSet, future::complete);
-
-        return future;
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                database.update(sql,toSet);
+                return null;
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 
-    public CompletableFuture<Integer> kickPlayer(String sender, String targetName, UUID id, String reason) {
-        CompletableFuture<Integer> future = new CompletableFuture<>();
-
+    public CompletableFuture<Void> kickPlayer(String sender, String targetName, UUID id, String reason) {
         String sql = "INSERT INTO player_punish (banned_id, sender_id, reason, creation_date, expiry_date, type) VALUES (?, ?, ?, ?, ?, 'kick');";
 
         Object[] toSet = new Object[]{
@@ -147,13 +180,16 @@ public class SQLStorage {
                 null
         };
 
-        database.updateAsync(sql,toSet, future::complete);
-
-        return future;
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                database.update(sql,toSet);
+                return null;
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        });
     }
-    public CompletableFuture<Integer> banPlayer(String sender, String targetName, UUID id, long expiry, String reason) {
-        CompletableFuture<Integer> future = new CompletableFuture<>();
-
+    public CompletableFuture<Void> banPlayer(String sender, String targetName, UUID id, long expiry, String reason) {
         String sql = "INSERT INTO player_punish (banned_id, sender_id, reason, creation_date, expiry_date, type) VALUES (?, ?, ?, ?, ?, 'ban');";
 
         Object[] toSet = new Object[]{
@@ -164,14 +200,17 @@ public class SQLStorage {
                 expiry == -1 ? null : new Timestamp(expiry)
         };
 
-        database.updateAsync(sql,toSet, future::complete);
-
-        return future;
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                database.update(sql,toSet);
+                return null;
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 
-    public CompletableFuture<Integer> warnPlayer(String sender, String targetName, UUID id, String reason) {
-        CompletableFuture<Integer> future = new CompletableFuture<>();
-
+    public CompletableFuture<Void> warnPlayer(String sender, String targetName, UUID id, String reason) {
         String sql = "INSERT INTO player_punish (banned_id, sender_id, reason, creation_date, expiry_date, type) VALUES (?, ?, ?, ?, ?, 'warn');";
 
         Object[] toSet = new Object[]{
@@ -182,12 +221,17 @@ public class SQLStorage {
                 null
         };
 
-        database.updateAsync(sql,toSet, future::complete);
-
-        return future;
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                database.update(sql,toSet);
+                return null;
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 
-    public void unBanPlayer(Ban ban, CommandSender sender, String reason) {
+    public CompletableFuture<Void> unBanPlayer(Ban ban, CommandSender sender, String reason) {
         String sql = "INSERT INTO player_punish_reverse (punish_id, banned_id, sender_id, reason) VALUES (?, ?, ?, ?);";
 
         Object[] toSet = new Object[]{
@@ -197,10 +241,17 @@ public class SQLStorage {
                 reason
         };
 
-        database.updateAsync(sql,toSet,c -> {});
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                database.update(sql,toSet);
+                return null;
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 
-    public void unMutePlayer(Mute mute, CommandSender sender, String reason) {
+    public CompletableFuture<Void> unMutePlayer(Mute mute, CommandSender sender, String reason) {
         String sql = "INSERT INTO player_punish_reverse(punish_id, banned_id, sender_id, reason) VALUES (?, ?, ?, ?);";
 
         Object[] toSet = new Object[]{
@@ -210,246 +261,266 @@ public class SQLStorage {
                 reason
         };
 
-        database.updateAsync(sql,toSet,c -> {});
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                database.update(sql,toSet);
+                return null;
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 
     /*tldr make sre to store whatever cumes out of this*/
     /*get an unstored chatplayer object thing i dont know what the fuck im doing i just want to play rimworld god help me*/
-    public CompletableFuture<ChatPlayer> getOrDefaultPlayer(UUID player) {
+    public CompletableFuture<ChatPlayer> getOrDefaultPlayer(@NotNull UUID player) {
         CompletableFuture<ChatPlayer> future = new CompletableFuture<>();
 
-        if (player == null) { future.complete(null);return future; }
+        Objects.requireNonNull(player);
 
-            String sql = "SELECT * FROM `levels_player` ";
-            sql += "WHERE `player_uuid` = ?;";
+        String sql = "SELECT * FROM player_combined_info WHERE id = ?;";
 
-            AuriBungeeUtil.logError("query no. 1: elytra database");
-            database.queryAsync(sql, new Object[]{player.toString()},resultSet -> {
+        future.completeAsync(() -> {
+            try (ResultSet set = database.query(sql, new Object[]{player.toString()})) {
                 int level;
                 int exp;
                 int money;
+                String nick;
+                String name;
+                boolean pms;
+                boolean discord_out;
+                boolean discord_in;
+                ChatColor color;
+                boolean inDatabase;
+                boolean chatEnabled;
+                ArrayList<Integer> rewards;
+                ArrayList<UUID> ignoredPlayers;
 
-                if (resultSet.next()) {
-                    level = resultSet.getInt("level");
-                    exp = resultSet.getInt("experience");
-                    money = resultSet.getInt("money");
+                if (set.next()) {
+                    name = set.getString("name");
+                    nick = set.getString("nickname");
+                    pms = set.getBoolean("pms");
+                    discord_out = set.getBoolean("discord_out");
+                    discord_in = set.getBoolean("discord_in");
+                    color = ChatColor.valueOf(set.getString("chat_color"));
+                    chatEnabled = set.getBoolean("chat_enabled");
+                    inDatabase = true;
+                    level = set.getInt("level");
+                    exp = set.getInt("experience");
+                    money = set.getInt("money");
+                    rewards = new Gson().fromJson(set.getString("unlocked_rewards"), new TypeToken<ArrayList<Integer>>() {}.getType());
+                    ignoredPlayers = new Gson().fromJson(set.getString("ignored_players"), new TypeToken<ArrayList<UUID>>() {}.getType());
                 } else {
+                    nick = null;
+                    name = null;
+                    pms = true;
+                    discord_in = true;
+                    discord_out = true;
+                    inDatabase = false;
+                    color = ChatColor.WHITE;
+                    chatEnabled = true;
                     level = 0;
                     exp = 0;
                     money = 0;
+                    rewards = new ArrayList<>();
+                    ignoredPlayers = new ArrayList<>();
                 }
 
-                String sql2 = "SELECT * FROM `player_info` ";
-                sql2 += "WHERE `id` = ?;";
+                return new ChatPlayer.Builder()
+                        .setId(player)
+                        .setName(name)
+                        .setNickname(nick)
+                        .setSettings(new Settings(discord_in,discord_out,pms,color,chatEnabled,ignoredPlayers))
+                        .setStats(new Stats(level,exp,money,rewards))
+                        .setInDatabase(inDatabase)
+                        .build();
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        });
 
-                AuriBungeeUtil.logError("query no. 2: bungee database");
-                database.queryAsync(sql2, new Object[]{player.toString()},rs -> {
-                    String nick;
-                    boolean pms;
-                    boolean discord_out;
-                    boolean discord_in;
-                    ChatColor color;
-                    boolean inDatabase;
-                    if (rs.next()) {
-                        nick = rs.getString("nickname");
-                        pms = rs.getBoolean("pms");
-                        discord_out = rs.getBoolean("discord_out");
-                        discord_in = rs.getBoolean("discord_in");
-                        color = ChatColor.valueOf(rs.getString("chat_color"));
-                        inDatabase = true;
-                    } else {
-                        nick = null;
-                        pms = true;
-                        discord_in = true;
-                        discord_out = true;
-                        inDatabase = false;
-                        color = ChatColor.WHITE;
-                    }
-                    AuriBungeeUtil.logError("completing future!");
-                    //inDatabase corresponds to whether the player is in bungeeDatabase not levelsDatabase
-                    future.complete(new ChatPlayer(player,level,exp,money,nick,discord_in,discord_out,pms,inDatabase,color));
-                });
-            });
         return future;
     }
 
-    public CompletableFuture<UUID> getIDFromUsername(String name) {
+    public CompletableFuture<UUID> getIDFromUsername(@NotNull String name) {
         CompletableFuture<UUID> future = new CompletableFuture<>();
 
-        if (name == null) { future.complete(null); return future; }
+        Objects.requireNonNull(name);
 
         ProxiedPlayer online = Main.get().getProxy().getPlayer(name);
         if (online != null) {
             future.complete(online.getUniqueId()); return future;
         }
 
-        String sql = "SELECT id FROM player_login WHERE name = ? ORDER BY time DESC LIMIT 1;";
+        String sql = "SELECT id FROM players WHERE name = ?;";
 
-        database.queryAsync(sql, new Object[]{name}, resultSet -> {
-            if (resultSet.next()) {
-                try {
-                    AuriBungeeUtil.logError(resultSet.getString("id"));
-                    future.complete(UUID.fromString(resultSet.getString("id")));
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    future.complete(null);
+        future.completeAsync(() -> {
+            try (ResultSet set = database.query(sql, new Object[]{name})) {
+                if (set.next()) {
+                    return UUID.fromString(set.getString("id"));
+                } else {
+                    return null;
                 }
-            } else {
-                future.complete(null);
+            } catch (SQLException e) {
+                throw new CompletionException(e);
             }
         });
 
         return future;
     }
-    public CompletableFuture<String> getUsernameFromID(UUID id) {
+
+    public CompletableFuture<String> getUsernameFromID(@NotNull UUID id) {
         CompletableFuture<String> future = new CompletableFuture<>();
 
-        if (id == null) { future.complete(null); return future; }
+            Objects.requireNonNull(id);
 
-        ProxiedPlayer online = Main.get().getProxy().getPlayer(id);
-        if (online != null) {
-            future.complete(online.getName()); return future;
-        }
-
-        String sql = "SELECT name FROM player_login WHERE id = ? ORDER BY time DESC LIMIT 1;";
-
-        database.queryAsync(sql, new Object[]{id.toString()}, resultSet -> {
-            if (resultSet.next()) {
-                try {
-                    future.complete(resultSet.getString("name"));
-                } catch (SQLException e) {
-                    e.printStackTrace(); e.printStackTrace();
-                    future.complete(null);
-                }
-            } else {
-                future.complete(null);
+            ProxiedPlayer online = Main.get().getProxy().getPlayer(id);
+            if (online != null) {
+                future.complete(online.getName());
+                return future;
             }
-        });
 
+            String sql = "SELECT name FROM players WHERE id = ?;";
+
+            future.completeAsync(() -> {
+                try (ResultSet set = database.query(sql, new Object[]{id.toString()})) {
+                    if (set.next()) {
+                        return set.getString("name");
+                    } else {
+                        return null;
+                    }
+                } catch (SQLException throwables) {
+                    throw new CompletionException(throwables);
+                }
+            });
         return future;
     }
+    /*future.completeAsync(() -> {
+        try (ResultSet set = database.query(sql, new Object[]{id.toString()})) {
+            if (set.next()) {
 
-    public CompletableFuture<Ban> getActiveBan(UUID id) {
+            } else {
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new CompletionException(e);
+        }
+    });*/
+
+    public CompletableFuture<Ban> getActiveBan(@NotNull UUID id) {
         CompletableFuture<Ban> future = new CompletableFuture<>();
 
-        if (id == null) { future.complete(null); return future; }
+        Objects.requireNonNull(id);
 
         String sql = "SELECT * FROM player_active_punishment WHERE banned_id = ? AND type = 'ban';";
 
-        database.queryAsync(sql, new Object[]{id.toString()}, resultSet -> {
-            if (resultSet.next()) {
-
-                String sender = resultSet.getString("sender_id");
-                try {
-                    future.complete(new Ban(resultSet.getInt("id"),
-                            sender != null ? UUID.fromString(resultSet.getString("sender_id")) : null,
+        future.completeAsync(() -> {
+            try (ResultSet set = database.query(sql, new Object[]{id.toString()})) {
+                if (set.next()) {
+                    String sender = set.getString("sender_id");
+                    return new Ban(set.getInt("id"),
+                            sender != null ? UUID.fromString(set.getString("sender_id")) : null,
                             id,
-                            resultSet.getString("reason"),
-                            resultSet.getTimestamp("creation_date"),
-                            resultSet.getTimestamp("expiry_date")));
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    future.complete(null);
+                            set.getString("reason"),
+                            set.getTimestamp("creation_date"),
+                            set.getTimestamp("expiry_date"));
+                } else {
+                    return null;
                 }
-            } else {
-                future.complete(null);
+            } catch (SQLException e) {
+                throw new CompletionException(e);
             }
         });
 
         return future;
     }
 
-    public CompletableFuture<Mute> getActiveMute(UUID id) {
+    public CompletableFuture<Mute> getActiveMute(@NotNull UUID id) {
         CompletableFuture<Mute> future = new CompletableFuture<>();
 
-        if (id == null) { future.complete(null); return future; }
+        Objects.requireNonNull(id);
 
         String sql = "SELECT * FROM player_active_punishment WHERE banned_id = ? AND type = 'mute';";
 
-        database.queryAsync(sql, new Object[]{id.toString()}, resultSet -> {
-            if (resultSet.next()) {
-                String sender = resultSet.getString("sender_id");
-                try {
-                    future.complete(new Mute(resultSet.getInt("id"),
-                            sender != null ? UUID.fromString(resultSet.getString("sender_id")) : null,
+        future.completeAsync(() -> {
+            try (ResultSet set = database.query(sql, new Object[]{id.toString()})) {
+                if (set.next()) {
+                    String sender = set.getString("sender_id");
+                    return new Mute(set.getInt("id"),
+                            sender != null ? UUID.fromString(set.getString("sender_id")) : null,
                             id,
-                            resultSet.getString("reason"),
-                            resultSet.getTimestamp("creation_date"),
-                            resultSet.getTimestamp("expiry_date")));
-                } catch (SQLException e) {
-                    e.printStackTrace();;
-                    future.complete(null);
+                            set.getString("reason"),
+                            set.getTimestamp("creation_date"),
+                            set.getTimestamp("expiry_date"));
+                } else {
+                    return null;
                 }
-            } else {
-                future.complete(null);
+            } catch (SQLException e) {
+                throw new CompletionException(e);
             }
         });
 
         return future;
     }
 
-    public CompletableFuture<IpBan> getActiveIpBan(String address) {
+    public CompletableFuture<IpBan> getActiveIpBan(@NotNull String address) {
         CompletableFuture<IpBan> future = new CompletableFuture<>();
 
-        if (address == null) { future.complete(null); return future; }
+        Objects.requireNonNull(address);
 
         String sql = "SELECT * FROM player_active_ip_ban WHERE ip_address = ?;";
 
-        database.queryAsync(sql, new Object[]{address}, resultSet -> {
-            if (resultSet.next()) {
-                try {
-                    String sender = resultSet.getString("sender_id");
-                    future.complete(new IpBan(resultSet.getInt("id"),
-                            sender != null ? UUID.fromString(resultSet.getString("sender_id")) : null,
-                            resultSet.getString("ip_address"),
-                            resultSet.getString("reason"),
-                            resultSet.getTimestamp("creation_date"),
-                            resultSet.getTimestamp("expiry_date")));
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    future.complete(null);
+        future.completeAsync(() -> {
+            try (ResultSet set = database.query(sql, new Object[]{address})) {
+                if (set.next()) {
+                    String sender = set.getString("sender_id");
+                    return new IpBan(set.getInt("id"),
+                            sender != null ? UUID.fromString(set.getString("sender_id")) : null,
+                            set.getString("ip_address"),
+                            set.getString("reason"),
+                            set.getTimestamp("creation_date"),
+                            set.getTimestamp("expiry_date"));
+                } else {
+                    return null;
                 }
-
-            } else {
-                future.complete(null);
+            } catch (SQLException e) {
+                throw new CompletionException(e);
             }
         });
 
         return future;
     }
 
-    public CompletableFuture<ArrayList<String>> getAlts(UUID id) {
+    public CompletableFuture<ArrayList<String>> getAlts(@NotNull UUID id) {
         CompletableFuture<ArrayList<String>> future = new CompletableFuture<>();
 
-        if (id == null) { AuriBungeeUtil.logError("id is null!");future.complete(new ArrayList<>()); return future; }
+        Objects.requireNonNull(id);
 
-        String sql = "SELECT DISTINCT NAME FROM player_login WHERE ip_address IN (SELECT DISTINCT ip_address FROM player_login WHERE id = ?);";
+        String sql = "SELECT DISTINCT name FROM player_login WHERE ip_address IN (SELECT DISTINCT ip_address FROM player_login WHERE foreign_id = ?);";
 
-        database.queryAsync(sql, new Object[]{id.toString()}, resultSet -> {
-            ArrayList<String> collectedString = new ArrayList<>();
-            try {
-                while (resultSet.next()) {
-                    String result = resultSet.getString("name");
+        future.completeAsync(() -> {
+            try (ResultSet set = database.query(sql, new Object[]{id.toString()})) {
+                ArrayList<String> collectedString = new ArrayList<>();
+                while (set.next()) {
+                    String result = set.getString("name");
                     collectedString.add(result);
                 }
-                future.complete(collectedString);
+                return collectedString;
             } catch (SQLException e) {
-                e.printStackTrace();
-                future.complete(new ArrayList<>());
+                throw new CompletionException(e);
             }
-
         });
 
         return future;
     }
 
-    public CompletableFuture<ArrayList<ComponentBuilder>> getPunishments(UUID id) {
+    public CompletableFuture<ArrayList<ComponentBuilder>> getPunishments(@NotNull UUID id) {
         CompletableFuture<ArrayList<ComponentBuilder>> future = new CompletableFuture<>();
 
-        if (id == null) { future.complete(new ArrayList<>()); return future; }
+        Objects.requireNonNull(id);
 
         String sql = "SELECT " +
-                "(SELECT name FROM player_login pl WHERE pl.id = p.sender_id ORDER BY time DESC LIMIT 1) name, " +
+                "(SELECT name FROM player_login pl WHERE pl.foreign_id = p.sender_id ORDER BY time DESC LIMIT 1) name, " +
                 "pr.sender_id reverse_sender_id, " +
                 "pr.reason reverse_reason, " +
                 "pr.creation_date reverse_date, " +
@@ -463,29 +534,30 @@ public class SQLStorage {
                 "WHERE p.banned_id = ? " +
                 "ORDER BY creation_date;";
 
-        database.queryAsync(sql, new Object[]{id.toString()}, resultSet -> {
-            ArrayList<ComponentBuilder> collectedString = new ArrayList<>();
-            try {
-                while (resultSet.next()) {
-                    String raw = resultSet.getString("name");
+        future.completeAsync(() -> {
+            try (ResultSet set = database.query(sql, new Object[]{id.toString()})) {
+                ArrayList<ComponentBuilder> collectedString = new ArrayList<>();
+                while (set.next()) {
+
+                    String raw = set.getString("name");
                     String name = raw == null ? "Console" : raw;
-                    String reason = resultSet.getString("reason");
-                    Timestamp created = resultSet.getTimestamp("creation_date");
-                    Timestamp expiry = resultSet.getTimestamp("expiry_date");
-                    String type = resultSet.getString("type");
+                    String reason = set.getString("reason");
+                    Timestamp created = set.getTimestamp("creation_date");
+                    Timestamp expiry = set.getTimestamp("expiry_date");
+                    String type = set.getString("type");
 
                     ComponentBuilder builder = new ComponentBuilder(" ");
                     ComponentBuilder hoverBuilder = new ComponentBuilder("Reason: ").color(ChatColor.GRAY)
                             .append(reason).color(ChatColor.WHITE);
-                    if (resultSet.getObject("reverse_date") != null) {
+                    if (set.getObject("reverse_date") != null) {
                         builder.append("").strikethrough(true);
-                        String reversed = resultSet.getString("reverse_sender_id");
+                        String reversed = set.getString("reverse_sender_id");
                         String reverseName = reversed == null ? "Console" : reversed;
 
                         hoverBuilder.append("\n").append("Reversed By: ").color(ChatColor.GRAY)
                                 .append(reverseName).color(ChatColor.WHITE);
 
-                        String reverseReason = resultSet.getString("reverse_reason");
+                        String reverseReason = set.getString("reverse_reason");
                         if (reverseReason != null) {
                             hoverBuilder.append("\n").append("Reverse Reason: ").color(ChatColor.GRAY)
                                     .append(reverseReason).color(ChatColor.WHITE);
@@ -516,45 +588,42 @@ public class SQLStorage {
                     }
 
                     collectedString.add(builder);
-
                 }
-                resultSet.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            future.complete(collectedString);
-        });
 
+                return collectedString;
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        });
 
         return future;
     }
 
-    public CompletableFuture<ArrayList<String>> getBannedAlts(UUID uuid) {
+    public CompletableFuture<ArrayList<String>> getBannedAlts(@NotNull UUID uuid) {
         CompletableFuture<ArrayList<String>> future = new CompletableFuture<>();
 
-        if (uuid == null) { future.complete(new ArrayList<>());return future; }
+        Objects.requireNonNull(uuid);
 
         String sql = "SELECT DISTINCT name " +
                 "FROM player_login " +
                 "INNER JOIN (SELECT DISTINCT banned_id " +
                 "FROM player_active_punishment " +
                 "WHERE type = 'ban') AS b " +
-                "WHERE player_login.id = b.banned_id " +
+                "WHERE player_login.foreign_id = b.banned_id " +
                 "AND ip_address " +
                 "IN (SELECT DISTINCT ip_address " +
                 "FROM player_login " +
-                "WHERE id = ?);";
+                "WHERE foreign_id = ?);";
 
-        database.queryAsync(sql, new Object[]{uuid.toString()}, resultSet -> {
-            ArrayList<String> collectedString = new ArrayList<>();
-            try {
-                while (resultSet.next()) {
-                    collectedString.add(resultSet.getString("name"));
+        future.completeAsync(() -> {
+            try (ResultSet set = database.query(sql, new Object[]{uuid.toString()})) {
+                ArrayList<String> collectedString = new ArrayList<>();
+                while (set.next()) {
+                    collectedString.add(set.getString("name"));
                 }
-                future.complete(collectedString);
+                return collectedString;
             } catch (SQLException e) {
-                e.printStackTrace();
-                future.complete(new ArrayList<>());
+                throw new CompletionException(e);
             }
         });
 

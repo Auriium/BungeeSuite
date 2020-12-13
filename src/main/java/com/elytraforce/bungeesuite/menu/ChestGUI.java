@@ -1,3 +1,4 @@
+/*
 package com.elytraforce.bungeesuite.menu;
 
 import de.exceptionflug.protocolize.inventory.InventoryModule;
@@ -29,7 +30,7 @@ public class ChestGUI extends GUI {
 
     @Override
     public void onClick(InventoryClickEvent event) {
-        
+
     }
 
     @Override
@@ -38,3 +39,4 @@ public class ChestGUI extends GUI {
     }
 
 }
+*/

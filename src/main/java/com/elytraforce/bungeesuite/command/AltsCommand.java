@@ -18,13 +18,15 @@ public class AltsCommand extends BungeeCommand {
             return;
         }
 
-        getStorage().getIDFromUsername(args[0]).thenAccept(s -> getStorage().getAlts(s).thenAccept(names -> {
-            if (names.isEmpty()) {
-                sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Target player has no alternate accounts"); return;
-            }
-            sender.sendMessage(ChatColor.YELLOW + args[0] + " has shared an IP address with the following users (Including themselves):");
-            sender.sendMessage(String.join(", ", names));
-        }));
+        getStorage().getIDFromUsername(args[0]).thenCompose(s -> {
+            return getStorage().getAlts(s).thenAccept(names -> {
+                if (names.isEmpty()) {
+                    sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "Target player has no alternate accounts"); return;
+                }
+                sender.sendMessage(ChatColor.YELLOW + args[0] + " has shared an IP address with the following users (Including themselves):");
+                sender.sendMessage(String.join(", ", names));
+            });
+        });
 
     }
 }

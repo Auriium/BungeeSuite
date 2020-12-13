@@ -1,6 +1,8 @@
 package com.elytraforce.bungeesuite;
 
 import codecrafter47.bungeetablistplus.api.bungee.BungeeTabListPlusAPI;
+import com.elytraforce.aUtils.logger.BLogger;
+import com.elytraforce.aUtils.util.BUtil;
 import com.elytraforce.bungeesuite.announce.AnnounceController;
 import com.elytraforce.bungeesuite.announce.RestartController;
 import com.elytraforce.bungeesuite.antiswear.Filters;
@@ -11,11 +13,13 @@ import com.elytraforce.bungeesuite.command.punish.KickCommand;
 import com.elytraforce.bungeesuite.command.punish.MuteCommand;
 import com.elytraforce.bungeesuite.command.punish.WarnCommand;
 import com.elytraforce.bungeesuite.config.PluginConfig;
+import com.elytraforce.bungeesuite.config.TestConfig;
 import com.elytraforce.bungeesuite.discord.DiscordController;
 import com.elytraforce.bungeesuite.hook.TabListVar;
 import com.elytraforce.bungeesuite.listeners.MOTDListener;
 import com.elytraforce.bungeesuite.listeners.PlayerActivityListener;
 import com.elytraforce.bungeesuite.localchat.ChatController;
+import com.elytraforce.bungeesuite.localchat.PlayerController;
 import com.elytraforce.bungeesuite.punish.PunishController;
 import com.elytraforce.bungeesuite.storage.SQLStorage;
 import net.md_5.bungee.api.ChatColor;
@@ -38,18 +42,25 @@ public class Main extends Plugin {
     @Override
     public void onDisable() {
         SQLStorage.get().shutdown();
-        ChatController.get().shutdown();
+        PlayerController.get().shutdown();
     }
 
     @Override
     public void onEnable() {
     	instance = this;
 
+        BUtil.register(this);
+        BLogger.error("Initializing BungeeSuite - Loading BUtils");
+
+        TestConfig fig = new TestConfig(); fig.create().load();
+
+        BLogger.error(fig.cumGod);
     	config = PluginConfig.get();
 
     	//register database
         SQLStorage.get();
         PunishController.get();
+        PlayerController.get();
 
         getProxy().registerChannel("ConsoleBanUser");
         // Register commands
@@ -77,6 +88,8 @@ public class Main extends Plugin {
         getProxy().getPluginManager().registerCommand(this, new PMCommand(this, "pm"));
         getProxy().getPluginManager().registerCommand(this, new ReplyCommand(this, "r"));
         getProxy().getPluginManager().registerCommand(this, new ReplyCommand(this, "reply"));
+        getProxy().getPluginManager().registerCommand(this,new IgnoreCommand(this, "block"));
+        getProxy().getPluginManager().registerCommand(this,new IgnoreCommand(this, "ignore"));
 
         getProxy().getPluginManager().registerListener(this, new PlayerActivityListener(this));
         getProxy().getPluginManager().registerListener(this, new MOTDListener(this));

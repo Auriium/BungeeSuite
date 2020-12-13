@@ -1,5 +1,6 @@
 package com.elytraforce.bungeesuite.command;
 
+import com.elytraforce.aUtils.logger.BLogger;
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.model.Punishment;
 import com.elytraforce.bungeesuite.punish.PunishController;
@@ -30,13 +31,15 @@ public abstract class PunishCommand extends BungeeCommand {
             sender.sendMessage(getConfig().getPrefix() + usage);
             return;
         }
-        getUuidFromArg(0, args).thenAccept(uuid -> {
+        getUuidFromArg(0, args).thenCompose(uuid -> {
+
             if (uuid == null) {
-                // Never joined the server
                 sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
+                return CompletableFuture.completedFuture(null);
             } else {
                 CompletableFuture<? extends Punishment<UUID>> punishment = getExistingPunishment(uuid);
                 punishment.thenAccept(pun -> {
+                    BLogger.error("AFTER ACCEPTING PUNISH");
                     if (pun != null) {
                         sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That user has already been dealt with");
                     } else {
@@ -62,6 +65,7 @@ public abstract class PunishCommand extends BungeeCommand {
                         issueNewPunishment(sender, args[0], uuid, expiryDate, reason);
                     }
                 });
+                return punishment;
             }
         });
     }

@@ -1,3 +1,4 @@
+/*
 package com.elytraforce.bungeesuite.menu;
 
 import net.md_5.bungee.api.plugin.Listener;
@@ -24,3 +25,4 @@ public class GUIController implements Listener {
     }
 
 }
+*/

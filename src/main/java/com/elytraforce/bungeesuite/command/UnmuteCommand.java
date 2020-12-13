@@ -6,6 +6,8 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
+import java.util.concurrent.CompletableFuture;
+
 public class UnmuteCommand extends BungeeCommand {
 
     public UnmuteCommand(Main plugin) {
@@ -21,11 +23,12 @@ public class UnmuteCommand extends BungeeCommand {
             return;
         }
 
-        getUuidFromArg(0,args).thenAccept(uuid -> {
+        getUuidFromArg(0,args).thenCompose(uuid -> {
            if (uuid == null) {
                sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That player has never joined the server");
+               return CompletableFuture.completedFuture(null);
            } else {
-               getStorage().getActiveMute(uuid).thenAccept(mute -> {
+               return getStorage().getActiveMute(uuid).thenAccept(mute -> {
                    if (mute == null) {
                        sender.sendMessage(getConfig().getPrefix() + ChatColor.RED + "That user is not muted");
                    } else {

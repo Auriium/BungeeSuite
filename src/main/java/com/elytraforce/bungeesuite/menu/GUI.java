@@ -1,3 +1,4 @@
+/*
 package com.elytraforce.bungeesuite.menu;
 
 import de.exceptionflug.protocolize.inventory.Inventory;
@@ -47,3 +48,4 @@ public abstract class GUI {
     }
 
 }
+*/

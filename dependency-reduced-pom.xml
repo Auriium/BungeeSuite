@@ -39,21 +39,6 @@
         </executions>
         <configuration>
           <finalName>${project.name}-${project.version}</finalName>
-          <artifactSet />
-          <relocations>
-            <relocation>
-              <pattern>com.zaxxer.hikari</pattern>
-              <shadedPattern>${project.groupId}.libs.hikari</shadedPattern>
-            </relocation>
-            <relocation>
-              <pattern>org.apache.ibatis</pattern>
-              <shadedPattern>${project.groupId}.libs.ibatis</shadedPattern>
-            </relocation>
-            <relocation>
-              <pattern>org.slf4j</pattern>
-              <shadedPattern>${project.groupId}.libs.slf4j</shadedPattern>
-            </relocation>
-          </relocations>
         </configuration>
       </plugin>
     </plugins>
@@ -89,12 +74,6 @@
       <version>3.0.1</version>
       <type>pom</type>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>de.exceptionflug</groupId>
-      <artifactId>protocolize-api</artifactId>
-      <version>1.6.6-SNAPSHOT</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>net.luckperms</groupId>

@@ -2,22 +2,18 @@ package com.elytraforce.bungeesuite.punish;
 
 import com.elytraforce.bungeesuite.Main;
 import com.elytraforce.bungeesuite.config.PluginConfig;
+import com.elytraforce.bungeesuite.model.Ban;
 import com.elytraforce.bungeesuite.model.Mute;
 import com.elytraforce.bungeesuite.storage.SQLStorage;
-import com.elytraforce.bungeesuite.util.AuriBungeeUtil;
 import com.elytraforce.bungeesuite.util.TimeFormatUtil;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
-import net.md_5.bungee.api.event.LoginEvent;
-import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -47,10 +43,6 @@ public class PunishController {
         return false;
     }
 
-    public void handleDC(PlayerDisconnectEvent event) {
-        this.unregisterMute(event.getPlayer());
-    }
-
     public void handleChat(ChatEvent event) {
         if (event.isCancelled() || !(event.getSender() instanceof ProxiedPlayer)) { return; }
         ProxiedPlayer player = (ProxiedPlayer) event.getSender();
@@ -72,54 +64,6 @@ public class PunishController {
             player.sendMessage(config.getPrefix() + ChatColor.RED + "You are permanently muted");
         } else {
             player.sendMessage(config.getPrefix() + ChatColor.RED + "Your mute expires in " + TimeFormatUtil.toDetailedDate(expiry));
-        }
-    }
-
-    //TODO: this might have to be async fully but i dont know yet because i have not tested lmfao
-    public void handleLogin(LoginEvent event) {
-        if (event.isCancelled()) { return; }
-
-        UUID who = event.getConnection().getUniqueId();
-        event.registerIntent(Main.get());
-        try {
-            storage.getActiveBan(who).thenAccept(ban -> {
-                if (ban != null) {
-                    event.setCancelled(true);
-                    String expiry = ban.getExpiry() == null ? "Permanent" : TimeFormatUtil.toDetailedDate(ban.getExpiry().getTime());
-                    event.setCancelReason(ChatColor.translateAlternateColorCodes('&',
-                            String.format("&cYou are banned from &b&lElytra&f&lForce" +
-                                    "\n\n&cReason: &7%s" +
-                                    "\nExpires: &7%s" +
-                                    "\n\n&c&lAppeal at &7elytraforce.com", ban.getReason(), expiry)));
-                } else {
-                    storage.getBannedAlts(who).thenAccept(list -> {
-                        if (!list.isEmpty()) {
-                            if (list.size() > 5) {
-                                String formatted = list.stream().limit(3).collect(Collectors.joining("\n&c"));
-                                event.setCancelled(true);
-                                event.setCancelReason(ChatColor.translateAlternateColorCodes('&',
-                                        String.format("&cYou are banned on too many accounts!" +
-                                                "\n&c%s" +
-                                                "\n&c..." +
-                                                "\n&c&lAppeal at &7elytraforce.com", formatted)));
-                                return;
-                            }
-                            main.broadcast(ChatColor.RED + String.format(PluginConfig.get().getPrefix() + "%s is an alternate account of the following banned players: %s",
-                                    event.getConnection().getName(), String.join(", ", list)), "elytraforce.helper");
-                        }
-                    });
-
-                    storage.trackLogin(event.getConnection());
-
-                    storage.getActiveMute(who).thenAccept(mute -> {
-                        if (mute != null) {
-                            registerMute(who, mute);
-                        }
-                    });
-                }
-            });
-        } finally {
-            event.completeIntent(Main.get());
         }
     }
 
@@ -214,4 +158,44 @@ public class PunishController {
         // Broadcast full message
         main.broadcast(PluginConfig.get().getPrefix() + ChatColor.RED + String.format("%s was banned by %s for %s (%s)", name, sender.getName(), reason, timeFormatted), "elytraforce.helper");
     }
+
+    public CompletableFuture<String> isDisallowed(UUID uuid) {
+        CompletableFuture<ArrayList<String>> isAltBanned = storage.getBannedAlts(uuid);
+        CompletableFuture<Ban> isBanned = storage.getActiveBan(uuid);
+
+        return CompletableFuture.allOf(isAltBanned,isBanned).thenApply((ignored) -> {
+            Ban ban = isBanned.join();
+            ArrayList<String> altBanned = isAltBanned.join();
+
+            if (LockoutController.isLockdown()) {
+                return ChatColor.translateAlternateColorCodes('&',
+                        "&cDisconnected from &b&lElytra&f&lForce" +
+                                "\n\n&cWe are undergoing maintenance!" +
+                                "\nPlease come back in a little while!" +
+                                "\n\n&c&lChat with us at &7discord.elytraforce.com");
+            }
+            else if (isAltBanned.join().size() > 3) {
+                String formatted = altBanned.stream().limit(3).collect(Collectors.joining("\n&c"));
+
+                return ChatColor.translateAlternateColorCodes('&',
+                        String.format("&cYou are banned on too many accounts!" +
+                                "\n&c%s" +
+                                "\n&c..." +
+                                "\n&c&lAppeal at &7elytraforce.com", formatted));
+            }
+            else if (isBanned.join() != null) {
+                String expiry = ban.getExpiry() == null ? "Permanent" : TimeFormatUtil.toDetailedDate(ban.getExpiry().getTime());
+
+                return ChatColor.translateAlternateColorCodes('&',
+                    String.format("&cYou are banned from &b&lElytra&f&lForce" +
+                            "\n\n&cReason: &7%s" +
+                            "\nExpires: &7%s" +
+                            "\n\n&c&lAppeal at &7elytraforce.com", ban.getReason(), expiry));
+
+            }
+            else { return null; }
+        });
+
+    }
+
 }

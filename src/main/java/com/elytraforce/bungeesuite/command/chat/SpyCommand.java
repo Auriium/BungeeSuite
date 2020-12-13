@@ -10,7 +10,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 public class SpyCommand extends BungeeCommand {
 
 	public SpyCommand(Main plugin) {
-		super(plugin, "cspy", "elytraforce.mod");
+		super(plugin, "cspy", "elytraforce.admin");
 	}
 
 	@SuppressWarnings("deprecation")
