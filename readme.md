@@ -1,3 +1,6 @@
+# Deprecated
+- This project is no longer an accurate representation of my code. The server it is for is dead and the code has been deprecated and open-sourced.
+
 # BungeeSuite
 A bungeecord side administration suite synced with MySQL
 
